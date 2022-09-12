@@ -1,0 +1,70 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:cc="http://java.sun.com/jsf/composite"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:my="http://xmlns.domain.my/jsf/component"
+                xmlns:h="http://java.sun.com/jsf/html">
+
+    <!-- INTERFACE -->
+    <cc:interface componentType="valueRange">
+        <cc:attribute name = "min" />
+        <cc:attribute name = "max" />
+        <cc:attribute name = "step" />
+        <cc:attribute name = "decimal" />
+        <cc:attribute name = "onComplete" />
+        <cc:attribute name = "increaseMinAction" method-signature="void increaseMFI1()"/>
+        <cc:attribute name = "decreaseMinAction" method-signature="void decreaseMFI1()"/>
+        <cc:attribute name = "increaseMaxAction" method-signature="void increaseMFI2()"/>
+        <cc:attribute name = "decreaseMaxAction" method-signature="void decreaseMFI2()"/>
+        <cc:attribute name="value1" type="com.uos.matrix.entities.RankableRangedEntry"/>
+    </cc:interface>
+
+    <cc:implementation>
+        <table style="margin: 0; padding: 0; float: bottom">
+            <tr>
+                <h:inputHidden id="valMFI1S" value="#{cc.attrs.value1.valueMin}">
+                    
+                </h:inputHidden>
+                <h:inputHidden id="valMFI2S" value="#{cc.attrs.value1.valueMax}"/>
+                <td style="width: 12%; border: none;margin: 0; margin-top: 0px; padding: 0; padding-top: 0px;">
+
+                            <p:commandButton id="testUp3" style="margin: 0; padding: 0; height: 15px;width: 100%; float: right; border-radius: 4px 0 0 0px; bottom: 0;" type="commandButtonStyle" icon="pi pi-angle-up" process="@this" update="valMFI1S,valMFI2S,displayRangeS,mfiSliderS" actionListener="#{cc.attrs.increaseMinAction}" oncomplete="#{cc.attrs.onComplete}">
+                            </p:commandButton>
+
+                            <p:commandButton id="testDown3" style="margin: 0; padding: 0; height: 15px;width: 100%;float: right; border-radius: 0px 0 0 4px; top: 0;" type="commandButtonStyle" icon="pi pi-angle-down" process="@this" update="valMFI1S,valMFI2S,displayRangeS,mfiSliderS" actionListener="#{cc.attrs.decreaseMinAction}" oncomplete="#{cc.attrs.onComplete}">
+
+                            </p:commandButton>
+                </td>
+
+
+
+                <td style="width: 76%; border: none; padding-top: 0; margin-top: 0;text-align: center;">
+                    <h:outputText style="float: bottom; padding-top: 0; margin-top: 0;" id="displayRangeS" value="#{formatterService.formatRangeFilterOutput(cc.attrs.min, cc.attrs.max, cc.attrs.value1.valueMin, cc.attrs.value1.valueMax, cc.attrs.decimal)}"/>
+                    <br/>
+                    <my:sliderV style="margin: 0; padding: 0; margin-top: 5px; margin-bottom: 10px; align-content: center" id="mfiSliderS"  for="valMFI1S,valMFI2S" display="displayRangeS" minValue="#{cc.attrs.min}" maxValue="#{cc.attrs.max}" step="#{cc.attrs.step}" range="true"  displayTemplate="{min} - {max}" >
+                        <p:ajax event="slideEnd"  process="valMFI1S,valMFI2S,@this"  />
+                        <p:ajax event="slideEnd" oncomplete="#{cc.attrs.onComplete}"/>
+                    </my:sliderV>
+                </td>
+
+                <td style="width: 12%; border: none;margin: 0; margin-top: 0px; padding: 0; padding-top: 0px">
+
+                        <p:commandButton id="testUp1" style="margin: 0; padding: 0px; height: 15px;width: 100%;float: left; border-radius: 0px 4px 0px 0px; bottom: 0;" type="commandButtonStyle" icon="pi pi-angle-up" process="@this" update="valMFI1S,valMFI2S,displayRangeS,mfiSliderS" actionListener="#{cc.attrs.increaseMaxAction}" oncomplete="#{cc.attrs.onComplete}">
+
+                        </p:commandButton>
+
+                        <p:commandButton id="testDown1" style="margin: 0; padding: 0px; height: 15px;width: 100%;float: left; border-radius: 0px 0px 4px 0px; top: 0;" type="commandButtonStyle" icon="pi pi-angle-down" process="@this" update="valMFI1S,valMFI2S,displayRangeS,mfiSliderS" actionListener="#{cc.attrs.decreaseMaxAction}" oncomplete="#{cc.attrs.onComplete}">
+                        </p:commandButton>
+                </td>
+
+
+            </tr>
+        </table>
+    </cc:implementation>
+</ui:composition>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/primefaceTest">
+    <context-param>
+        <param-name>primefaces.CSP</param-name>
+        <param-value>true</param-value>
+    </context-param>
+</Context>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:my="http://xmlns.domain.my/jsf/component"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+      >
+<f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+        <h:head>
+            <ui:include src="/tabs.xhtml" />
+        </h:head>
+    <p:card class="centered" style="width: 60rem; height: auto; margin: 0 auto; align-content: center;text-align:center;">
+    <h:form id="formInput">
+        <p:inputTextarea value="#{feedbackView.input}" style="width: 50rem"/>
+        <br /> 
+         <p:messages id="messages"  showDetail="true" closable="true">
+         <!--<p:autoUpdate/>-->
+         </p:messages>
+        <p:commandButton value="Send Feedback" action="#{feedbackView.sendEmail()}" update="formInput" style="margin-top: 10px"/>
+    </h:form>
+    </p:card>
+</f:view>
+        <ui:include src="/footer.xhtml" />
+</html>
