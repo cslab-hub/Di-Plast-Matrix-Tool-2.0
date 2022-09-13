@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:my="http://xmlns.domain.my/jsf/component"
+      xmlns:cc="http://java.sun.com/jsf/composite/components"
+      >
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8" locale="en-US">
+        <h:head>
+            <style type="text/css">
+                .ui-filter-column .ui-column-customfilter .custom-filter {
+                    width: 100%;
+                    box-sizing: border-box;
+                    margin-bottom: 3px;
+                }
+                .ui-sortable-column-icon {
+                    float: top !important;
+                    position: relative !important;
+                }
+                .ui-datatable-hor-scroll .ui-datatable-tablewrapper,.scrolling-div .ui-datatable-tablewrapper{
+                    overflow: auto;
+                    width: 100%;
+                    padding-bottom: 5px;
+                }
+                th {
+                    vertical-align: bottom;
+                }
+                .commandButtonStyle {
+                    margin: 10px;
+                }
+                .ui-column-filter {
+                    vertical-align: bottom;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    margin-bottom: 3px !important;
+                }
+                toggleswitch-box {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    height: 1.75em;
+                }
+                .toggleswitch-box.toggleswitch-box-border {
+                    padding: 5px 5px;
+                    border-style: solid;
+                    border-color: #00aae1;
+                    border-width: 1px;
+                    border-radius: 50px; 
+                }
+                .toggleswitch-box.toggleswitch-box-border:hover {
+                    border-color: #673AB7;
+                    border-width: 2px; 
+                }
+                .ui-toggleswitch {
+                    vertical-align: central;
+                    margin-left: 7px;
+                }
+
+                .ui-selectonemenu{
+                    width: 100% !important;
+                }
+                .ui-selectonemenu-label{
+                    width: 100% !important;
+                }
+            </style>
+            <ui:include src="/tabs.xhtml" />
+        </h:head>
+        <h:form id="providerView" >
+            <p:messages id="messages" showDetail="true">
+                <p:autoUpdate/>
+            </p:messages>
+            <!--
+            <p:dialog position="center center" dynamic="true" modal="true" widgetVar="loadWidget" id="loadWidget" 
+                      draggable="false" closable="false" visible="#{sellerView.showLoading}" rendered="#{sellerView.showLoading}" onShow="PF('loadWidget').initPosition()">
+
+                <i class="pi pi-spin pi-spinner" style="font-size: 6rem"></i>
+            </p:dialog>
+            -->
+            <p:dataTable id="recycleds" var="recycled" value="#{sellerView.recycled}" rows="10" widgetVar="recycledTable" sortMode="single" multiViewState="false"
+                         paginator="true" 
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"
+                         rowsPerPageTemplate="5,10,20,30,50,{ShowAll|'All'}"
+                         paginatorPosition ="bottom"
+                         emptyMessage="No product found with given criteria" 
+                         filteredValue="#{sellerView.filteredRecycled}"
+                         stickyHeader="true" 
+                         rowKey="#{recycled.id}"
+                         selection="#{sellerView.selectedRecycled}"
+                         >
+
+                <f:facet name="header">
+                    <div class="p-d-flex p-jc-between p-ai-center">
+                        <h1 style="font-size:23px;">List of Recycled Material
+
+                            <span style="float:right">
+                                <span class="toggleswitch-box">
+                                    <p:outputLabel for="" value="Show only owned" />
+                                    <p:toggleSwitch style="margin-right: 10pt;margin-bottom: -5pt" value="#{sellerView.showOnlyOwned}" onchange="#{sellerView.reloadData(loginService.currentUser)}" >
+                                        <p:ajax update="providerView:recycleds" oncomplete="PF('recycledTable').filter()"/>
+                                    </p:toggleSwitch>
+                                </span>
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,recycleds" oncomplete="#{sellerView.initReset()}" update="recycleds" value="Reset Filter" icon="pi pi-cloud-upload">
+                                </p:commandButton>
+
+
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this" oncomplete="PF('uploadDialog').show()" value="Upload Data" rendered="#{loginService.currentUser.adminTag}" icon="pi pi-cloud-upload"/>
+
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this" action="#{sellerView.newSelectedRecycled(loginService.currentUser.username)}" oncomplete="PF('recycledsDialog').show()" update="editDialog" value="Create Recyclate" icon="pi pi-plus-circle" />
+
+                                <p:commandButton id="toggler" type="button" value="Columns" icon="pi pi-align-justify"/>
+                                <p:columnToggler datasource="recycleds" trigger="toggler">
+                                    <p:ajax event="toggle" listener="#{sellerView.onToggle}" update="rankingView:rankingRecycleds"/>
+                                </p:columnToggler>
+                                <p:inputText id="globalFilter" onkeyup="PF('recycledTable').filter()" placeholder="Enter Global Search Key"/>
+                            </span>
+                        </h1>
+                    </div>
+                </f:facet>
+
+
+                <p:column style="width:2rem" toggleable="false">
+                    <p:rowToggler/>
+                    
+                </p:column>
+
+                <p:column style="width:0rem" toggleable="false" visible="false">
+                </p:column>
+
+                <p:column headerText="Polymer Type" sortBy="#{recycled.material.name}" visible="#{sellerView.activeColumns1[0]}" filterBy="#{recycled.material.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.material}" onchange="PF('recycledTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctMaterials}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatOutput(recycled.material.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Tested By" sortBy="#{recycled.testedBy}" visible="#{sellerView.activeColumns1[1]}" filterBy="#{recycled.testedBy}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.testedBy}" onchange="PF('recycledTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctTestedBy}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.testedBy, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Supplier" filterValue="#{sellerView.currentRequest.supplier}" sortBy="#{recycled.supplier}" visible="#{sellerView.activeColumns1[2]}" filterBy="#{recycled.supplier}" filterMatchMode="contains">
+                    <h:outputText value="#{formatterService.formatOutput(recycled.supplier, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Process Technology" sortBy="#{recycled.processTech.name}" visible="#{sellerView.activeColumns1[3]}" filterBy="#{recycled.processTech.name}" filterMatchMode="exact">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.processTech}" onchange="PF('recycledTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctProcessTechs}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.processTech.name, 0)}"/>
+                </p:column>                
+
+                <p:column headerText="Polymer Modifications" sortBy="#{recycled.polymerModifications.name}" visible="#{sellerView.activeColumns1[4]}" filterBy="#{recycled.polymerModifications.name}" filterMatchMode="contains" >
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('recycledTable').filter()" value="#{sellerView.currentRequest.polymerModifications}" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctPolyMods}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.polymerModifications.name, 0)}"/>
+
+                </p:column>
+
+                <p:column headerText="Modification Content" sortBy="#{recycled.modificationContent.valueMin}" visible="#{sellerView.activeColumns1[5]}" filterBy="#{recycled.modificationContent}" filterFunction="#{sellerView.filterByRange}">
+
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.modificationMin}" max="#{sellerView.modificationMax}" step="#{sellerView.modificationStep}" decimal="#{sellerView.modificationDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getModificationContent().getValueMin(),  sellerView.modificationMax, sellerView.modificationMin, sellerView.currentRequest.getModificationContent(), sellerView.modificationStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getModificationContent().getValueMax(), sellerView.modificationMin, sellerView.modificationMax, sellerView.currentRequest.getModificationContent(), sellerView.modificationStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getModificationContent().getValueMax(), sellerView.modificationMax, sellerView.modificationMin, sellerView.currentRequest.getModificationContent().getValueMin(), sellerView.currentRequest.getModificationContent(), sellerView.modificationStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getModificationContent().getValueMin(),   sellerView.modificationMin, sellerView.modificationMax, sellerView.currentRequest.getModificationContent().getValueMax(), sellerView.currentRequest.getModificationContent(), sellerView.modificationStep)}" value1="#{sellerView.currentRequest.modificationContent}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.modificationContent, null, sellerView.modificationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.modificationContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Particle Geometry" sortBy="#{recycled.particleGeometry.name}" visible="#{sellerView.activeColumns1[6]}" filterBy="#{recycled.particleGeometry.name}" filterMatchMode="contains" >
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.particleGeometry}" onchange="PF('recycledTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctParticleGeo}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.particleGeometry.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Melt Filtration Size" sortBy="#{recycled.meltFiltrationSize.value}" visible="#{sellerView.activeColumns1[7]}" filterBy="#{recycled.meltFiltrationSize.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterLEQ}" >
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.meltFiltrationSize.value}" max="#{sellerView.meltFiltrationMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.meltFiltrationMin}" styleClass="custom-filter" stepFactor="#{sellerView.meltFiltrationStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.meltFiltrationDecimal}" minFractionDigits="#{sellerView.meltFiltrationDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.meltFiltrationSize.value, sellerView.meltFiltrationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.meltFiltrationSize)}"/>
+                </p:column>
+
+
+                <p:column id="mfiColumn" headerText="MFI" visible="#{sellerView.activeColumns1[8]}" filterBy="#{recycled.MFI}" sortBy="#{recycled.MFI.valueMin}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.MFIMin}" max="#{sellerView.MFIMax}" step="#{sellerView.MFIStep}" decimal="#{sellerView.MFIDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getMFI().getValueMin(),  sellerView.MFIMax, sellerView.MFIMin, sellerView.currentRequest.getMFI(), sellerView.MFIStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getMFI().getValueMax(), sellerView.MFIMin, sellerView.MFIMax, sellerView.currentRequest.getMFI(), sellerView.MFIStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getMFI().getValueMax(), sellerView.MFIMax, sellerView.MFIMin, sellerView.currentRequest.getMFI().getValueMin(), sellerView.currentRequest.getMFI(), sellerView.MFIStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getMFI().getValueMin(),   sellerView.MFIMin, sellerView.MFIMax, sellerView.currentRequest.getMFI().getValueMax(), sellerView.currentRequest.getMFI(), sellerView.MFIStep)}" value1="#{sellerView.currentRequest.MFI}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.currentMFICondition}" hideNoSelectionOption="true" onchange="#{sellerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctMFIWeights}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('recycledTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.MFI, null, sellerView.MFIDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.MFI)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="K Value" filterValue="#{sellerView.currentRequest.KValue}" sortBy="#{recycled.KValue.valueMin}" visible="#{sellerView.activeColumns1[9]}" filterBy="#{recycled.KValue}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.kvalueMin}" max="#{sellerView.kvalueMax}" step="#{sellerView.kvalueStep}" decimal="#{sellerView.kvalueDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getKValue().getValueMin(),  sellerView.kvalueMax, sellerView.kvalueMin, sellerView.currentRequest.getKValue(), sellerView.kvalueStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getKValue().getValueMax(), sellerView.kvalueMin, sellerView.kvalueMax, sellerView.currentRequest.getKValue(), sellerView.kvalueStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getKValue().getValueMax(), sellerView.kvalueMax, sellerView.kvalueMin, sellerView.currentRequest.getKValue().getValueMin(), sellerView.currentRequest.getKValue(), sellerView.kvalueStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getKValue().getValueMin(),   sellerView.kvalueMin, sellerView.kvalueMax, sellerView.currentRequest.getKValue().getValueMax(), sellerView.currentRequest.getKValue(), sellerView.kvalueStep)}" value1="#{sellerView.currentRequest.KValue}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.KValue, null, sellerView.kvalueDecimal)} "/>
+                </p:column>
+
+
+                <p:column id="charpyColumn" headerText="Charpy Impact Strength" visible="#{sellerView.activeColumns1[10]}" filterBy="#{recycled.charpyTensileStr.value}" sortBy="#{recycled.charpyTensileStr.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.charpyTensileStr.value}" max="#{sellerView.charpyMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.charpyMin}" styleClass="custom-filter" stepFactor="#{sellerView.charpyStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.charpyDecimal}" minFractionDigits="#{sellerView.charpyDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.currentCharpyImpactStrCondition}" hideNoSelectionOption="true" onchange="#{sellerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('recycledTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit, sellerView.charpyDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}"/>
+
+
+                </p:column>
+
+                <p:column headerText="E-Modulus" sortBy="#{recycled.EModulus.valueMin}" filterBy="#{unitConverterService.convertUnit(recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit)}" visible="#{sellerView.activeColumns1[11]}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.EModulusMin}" max="#{sellerView.EModulusMax}" step="#{sellerView.EModulusStep}" decimal="#{sellerView.EModulusDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getEModulus().getValueMin(),  sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulus(), sellerView.EModulusStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getEModulus().getValueMax(), sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulus(), sellerView.EModulusStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getEModulus().getValueMax(), sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulus().getValueMin(), sellerView.currentRequest.getEModulus(), sellerView.EModulusStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getEModulus().getValueMin(),   sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulus().getValueMax(), sellerView.currentRequest.getEModulus(), sellerView.EModulusStep)}" value1="#{sellerView.currentRequest.EModulus}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column headerText="E-Modulus TD" sortBy="#{recycled.EModulusTD.valueMin}" filterBy="#{unitConverterService.convertUnit(recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit)}" visible="#{sellerView.activeColumns1[12]}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.EModulusMin}" max="#{sellerView.EModulusMax}" step="#{sellerView.EModulusStep}" decimal="#{sellerView.EModulusDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getEModulusTD().getValueMin(),  sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulusTD(), sellerView.EModulusStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getEModulusTD().getValueMax(), sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulusTD(), sellerView.EModulusStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getEModulusTD().getValueMax(), sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulusTD().getValueMin(), sellerView.currentRequest.getEModulusTD(), sellerView.EModulusStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getEModulusTD().getValueMin(),   sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulusTD().getValueMax(), sellerView.currentRequest.getEModulusTD(), sellerView.EModulusStep)}" value1="#{sellerView.currentRequest.EModulusTD}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="E-Modulus MD" sortBy="#{recycled.EModulusMD.valueMin}" filterBy="#{unitConverterService.convertUnit(recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit)}" visible="#{sellerView.activeColumns1[13]}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.EModulusMin}" max="#{sellerView.EModulusMax}" step="#{sellerView.EModulusStep}" decimal="#{sellerView.EModulusDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getEModulusMD().getValueMin(),  sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulusMD(), sellerView.EModulusStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getEModulusMD().getValueMax(), sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulusMD(), sellerView.EModulusStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getEModulusMD().getValueMax(), sellerView.EModulusMax, sellerView.EModulusMin, sellerView.currentRequest.getEModulusMD().getValueMin(), sellerView.currentRequest.getEModulusMD(), sellerView.EModulusStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getEModulusMD().getValueMin(),   sellerView.EModulusMin, sellerView.EModulusMax, sellerView.currentRequest.getEModulusMD().getValueMax(), sellerView.currentRequest.getEModulusMD(), sellerView.EModulusStep)}" value1="#{sellerView.currentRequest.EModulusMD}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Flexural Modulus" sortBy="#{recycled.flexuralModulus.valueMin}" filterBy="#{unitConverterService.convertUnit(recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit)}" visible="#{sellerView.activeColumns1[14]}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.flexuralModulusMin}" max="#{sellerView.flexuralModulusMax}" step="#{sellerView.flexuralModulusStep}" decimal="#{sellerView.flexuralModulusDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getFlexuralModulus().getValueMin(),  sellerView.flexuralModulusMax, sellerView.flexuralModulusMin, sellerView.currentRequest.getFlexuralModulus(), sellerView.flexuralModulusStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getFlexuralModulus().getValueMax(), sellerView.flexuralModulusMin, sellerView.flexuralModulusMax, sellerView.currentRequest.getFlexuralModulus(), sellerView.flexuralModulusStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getFlexuralModulus().getValueMax(), sellerView.flexuralModulusMax, sellerView.flexuralModulusMin, sellerView.currentRequest.getFlexuralModulus().getValueMin(), sellerView.currentRequest.getFlexuralModulus(), sellerView.flexuralModulusStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getFlexuralModulus().getValueMin(),   sellerView.flexuralModulusMin, sellerView.flexuralModulusMax, sellerView.currentRequest.getFlexuralModulus().getValueMax(), sellerView.currentRequest.getFlexuralModulus(), sellerView.flexuralModulusStep)}" value1="#{sellerView.currentRequest.flexuralModulus}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit, sellerView.flexuralModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield" sortBy="#{recycled.tensileStrenghtAtYield.value}" visible="#{sellerView.activeColumns1[15]}" filterBy="#{unitConverterService.convertUnit(recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileStrenghtAtYield.value}" max="#{sellerView.strengthAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strengthAtYieldDecimal}" minFractionDigits="#{sellerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield TD" sortBy="#{recycled.tensileStrenghtAtYieldTD.value}" visible="#{sellerView.activeColumns1[16]}" filterBy="#{unitConverterService.convertUnit(recycled.tensileStrenghtAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileStrenghtAtYieldTD.value}" max="#{sellerView.strengthAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strengthAtYieldDecimal}" minFractionDigits="#{sellerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.tensileElongationAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileElongationAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield MD" sortBy="#{recycled.tensileStrenghtAtYieldMD.value}" visible="#{sellerView.activeColumns1[17]}" filterBy="#{unitConverterService.convertUnit(recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileStrenghtAtYieldMD.value}" max="#{sellerView.strengthAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strengthAtYieldDecimal}" minFractionDigits="#{sellerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Yield" sortBy="#{recycled.tensileElongationAtYield.value}" visible="#{sellerView.activeColumns1[18]}" filterBy="#{recycled.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileElongationAtYield.value}" max="#{sellerView.strainAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtYieldDecimal}" minFractionDigits="#{sellerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.tensileElongationAtYield.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileElongationAtYield)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield TD" sortBy="#{recycled.tensileElongationAtYieldTD.value}" visible="#{sellerView.activeColumns1[19]}" filterBy="#{recycled.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileElongationAtYieldTD.value}" max="#{sellerView.strainAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtYieldDecimal}" minFractionDigits="#{sellerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.tensileElongationAtYieldTD.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileElongationAtYieldTD)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield MD" sortBy="#{recycled.tensileElongationAtYieldMD.value}" visible="#{sellerView.activeColumns1[29]}" filterBy="#{recycled.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.tensileElongationAtYieldMD.value}" max="#{sellerView.strainAtYieldMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtYieldDecimal}" minFractionDigits="#{sellerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.tensileElongationAtYieldMD.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.tensileElongationAtYieldMD)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Break" sortBy="#{recycled.elongationAtBreak.value}" visible="#{sellerView.activeColumns1[21]}" filterBy="#{recycled.elongationAtBreak.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.elongationAtBreak.value}" max="#{sellerView.strainAtBreakMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtBreakDecimal}" minFractionDigits="#{sellerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.elongationAtBreak.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.elongationAtBreak)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break TD" sortBy="#{recycled.elongationAtBreakTD.value}" visible="#{sellerView.activeColumns1[22]}" filterBy="#{recycled.elongationAtBreakTD.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.elongationAtBreakTD.value}" max="#{sellerView.strainAtBreakMaxMDTD}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtBreakDecimal}" minFractionDigits="#{sellerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.elongationAtBreakTD.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.elongationAtBreakTD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break MD" sortBy="#{recycled.elongationAtBreakMD.value}" visible="#{sellerView.activeColumns1[23]}" filterBy="#{recycled.elongationAtBreakMD.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.elongationAtBreakMD.value}" max="#{sellerView.strainAtBreakMaxMDTD}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{sellerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.strainAtBreakDecimal}" minFractionDigits="#{sellerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.elongationAtBreakMD.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.elongationAtBreakMD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Color" sortBy="#{recycled.color.name}" visible="#{sellerView.activeColumns1[24]}" filterBy="#{recycled.color.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.color}" onchange="PF('recycledTable').filter()" styleClass="custom-filter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctColors}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.color.name, 0)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="Pollution" sortBy="#{recycled.pollution.value}" visible="#{sellerView.activeColumns1[25]}" filterBy="#{recycled.pollution.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterLEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.pollution.value}" max="#{sellerView.pollutionMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.pollutionMin}" styleClass="custom-filter" stepFactor="#{sellerView.pollutionStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.pollutionDecimal}" minFractionDigits="#{sellerView.pollutionDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.pollution.value, sellerView.pollutionDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.pollution)}"/>
+
+                </p:column>
+
+                <p:column headerText="Recycling Content" sortBy="#{recycled.recyclingContent.value}" visible="#{sellerView.activeColumns1[26]}" filterBy="#{recycled.recyclingContent.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.recyclingContent.value}" max="#{sellerView.recyclingMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.recyclingMin}" styleClass="custom-filter" stepFactor="#{sellerView.recyclingStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.recyclingDecimal}" minFractionDigits="#{sellerView.recyclingDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.recyclingContent.value, sellerView.recyclingDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.recyclingContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Density" sortBy="#{recycled.density.valueMin}" visible="#{sellerView.activeColumns1[27]}" filterBy="#{unitConverterService.convertUnit(recycled.density, sellerView.user.config.densityPrefferedUnit)}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.densityMin}" max="#{sellerView.densityMax}" step="#{sellerView.densityStep}" decimal="#{sellerView.densityDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getDensity().getValueMin(),  sellerView.densityMax, sellerView.densityMin, sellerView.currentRequest.getDensity(), sellerView.densityStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getDensity().getValueMax(), sellerView.densityMin, sellerView.densityMax, sellerView.currentRequest.getDensity(), sellerView.densityStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getDensity().getValueMax(), sellerView.densityMax, sellerView.densityMin, sellerView.currentRequest.getDensity().getValueMin(), sellerView.currentRequest.getDensity(), sellerView.densityStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getDensity().getValueMin(),   sellerView.densityMin, sellerView.densityMax, sellerView.currentRequest.getDensity().getValueMax(), sellerView.currentRequest.getDensity(), sellerView.densityStep)}" value1="#{sellerView.currentRequest.density}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.density, sellerView.user.config.densityPrefferedUnit, sellerView.densityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.density, sellerView.user.config.densityPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Bulk Density" sortBy="#{recycled.bulkDensity.valueMin}" visible="#{sellerView.activeColumns1[28]}" filterBy="#{unitConverterService.convertUnit(recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit)}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.adensityMin}" max="#{sellerView.adensityMax}" step="#{sellerView.adensityStep}" decimal="#{sellerView.adensityDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getBulkDensity().getValueMin(),  sellerView.adensityMax, sellerView.adensityMin, sellerView.currentRequest.getBulkDensity(), sellerView.adensityStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getBulkDensity().getValueMax(), sellerView.adensityMin, sellerView.adensityMax, sellerView.currentRequest.getBulkDensity(), sellerView.adensityStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getBulkDensity().getValueMax(), sellerView.adensityMax, sellerView.adensityMin, sellerView.currentRequest.getBulkDensity().getValueMin(), sellerView.currentRequest.getBulkDensity(), sellerView.adensityStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getBulkDensity().getValueMin(),   sellerView.adensityMin, sellerView.adensityMax, sellerView.currentRequest.getBulkDensity().getValueMax(), sellerView.currentRequest.getBulkDensity(), sellerView.adensityStep)}" value1="#{sellerView.currentRequest.bulkDensity}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit, sellerView.adensityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column id="izodColumn" headerText="Izod Impact Strength" visible="#{sellerView.activeColumns1[29]}" filterBy="#{recycled.izodTensileStr.value}" sortBy="#{recycled.izodTensileStr.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.izodTensileStr.value}" max="#{sellerView.izodMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.izodMin}" styleClass="custom-filter" stepFactor="#{sellerView.izodStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.izodDecimal}" minFractionDigits="#{sellerView.izodDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.currentIzodImpactStrCondition}" hideNoSelectionOption="true" onchange="#{sellerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('recycledTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit, sellerView.izodDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}"/>
+
+                </p:column>
+
+
+                <p:column id="hardnessColumn" headerText="Hardness" visible="#{sellerView.activeColumns1[30]}" filterBy="#{recycled.hardnes}" sortBy="#{recycled.hardnes.valueMin}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.hardnessMin}" max="#{sellerView.hardnessMax}" step="#{sellerView.hardnessStep}" decimal="#{sellerView.hardnessDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.hardnes.getValueMin(),  sellerView.hardnessMax, sellerView.hardnessMin, sellerView.currentRequest.hardnes, sellerView.hardnessStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.hardnes.getValueMax(), sellerView.hardnessMin, sellerView.hardnessMax, sellerView.currentRequest.hardnes, sellerView.hardnessStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.hardnes.getValueMax(), sellerView.hardnessMax, sellerView.hardnessMin, sellerView.currentRequest.hardnes.getValueMin(), sellerView.currentRequest.hardnes, sellerView.hardnessStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.hardnes.getValueMin(), sellerView.hardnessMin, sellerView.hardnessMax, sellerView.currentRequest.hardnes.getValueMax(), sellerView.currentRequest.hardnes, sellerView.hardnessStep)}" value1="#{sellerView.currentRequest.hardnes}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.currentHardness}" hideNoSelectionOption="true" onchange="#{sellerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctHardness}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('recycledTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.hardnes, null, sellerView.hardnessDecimal)} "/>
+                </p:column>
+
+                <p:column id="vicatsColumn" headerText="Vicat" visible="#{sellerView.activeColumns1[31]}" filterBy="#{recycled.vicat.value}" sortBy="#{recycled.vicat.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.vicat.value}" max="#{sellerView.vicatMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.vicatMin}" styleClass="custom-filter" stepFactor="#{sellerView.vicatStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.vicatDecimal}" minFractionDigits="#{sellerView.vicatDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{sellerView.currentRequest.currentVicatCondition}" hideNoSelectionOption="true" onchange="#{sellerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctVicats}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('recycledTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.vicat, vicatPrefferedUnit, sellerView.vicatDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}"/>
+
+                </p:column>
+
+                <p:column headerText="HDT" sortBy="#{recycled.hdt.value}" filterBy="#{unitConverterService.convertUnit(recycled.hdt, sellerView.user.config.HDTPrefferedUnit)}" visible="#{sellerView.activeColumns1[32]}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.hdt.value}" max="#{sellerView.HDTMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.HDTMin}" styleClass="custom-filter" stepFactor="#{sellerView.HDTStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.HDTDecimal}" minFractionDigits="#{sellerView.HDTDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.hdt, sellerView.user.config.HDTPrefferedUnit, sellerView.HDTDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.hdt, sellerView.user.config.HDTPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Oit" sortBy="#{recycled.oit.value}" filterBy="#{recycled.oit.value}" visible="#{sellerView.activeColumns1[33]}" filterMatchMode="exact" filterFunction="#{sellerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.oit.value}" max="#{sellerView.OITMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.OITMin}" styleClass="custom-filter" stepFactor="#{sellerView.OITStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.OITDecimal}" minFractionDigits="#{sellerView.OITDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.oit.value, sellerView.OITDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.oit)}"/>
+                </p:column>
+
+                <p:column headerText="Mould Shrinkage" sortBy="#{recycled.mouldShrinkage.valueMin}" visible="#{sellerView.activeColumns1[34]}" filterBy="#{recycled.mouldShrinkage}" filterFunction="#{sellerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{sellerView.mouldShrinkageMin}" max="#{sellerView.mouldShrinkageMax}" step="#{sellerView.mouldShrinkageStep}" decimal="#{sellerView.mouldShrinkageDecimal}" onComplete="PF('recycledTable').filter()" decreaseMinAction="#{sellerView.decreaseRange1(sellerView.currentRequest.getMouldShrinkage().getValueMin(),  sellerView.mouldShrinkageMax, sellerView.mouldShrinkageMin, sellerView.currentRequest.getMouldShrinkage(), sellerView.mouldShrinkageStep)}" increaseMaxAction="#{sellerView.increaseRange2(sellerView.currentRequest.getMouldShrinkage().getValueMax(), sellerView.mouldShrinkageMin, sellerView.mouldShrinkageMax, sellerView.currentRequest.getMouldShrinkage(), sellerView.mouldShrinkageStep)}" decreaseMaxAction="#{sellerView.decreaseRange2(sellerView.currentRequest.getMouldShrinkage().getValueMax(), sellerView.mouldShrinkageMax, sellerView.mouldShrinkageMin, sellerView.currentRequest.getMouldShrinkage().getValueMin(), sellerView.currentRequest.getMouldShrinkage(), sellerView.mouldShrinkageStep)}" increaseMinAction="#{sellerView.increaseRange1(sellerView.currentRequest.getMouldShrinkage().getValueMin(),   sellerView.mouldShrinkageMin, sellerView.mouldShrinkageMax, sellerView.currentRequest.getMouldShrinkage().getValueMax(), sellerView.currentRequest.getMouldShrinkage(), sellerView.mouldShrinkageStep)}" value1="#{sellerView.currentRequest.mouldShrinkage}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycled.mouldShrinkage, null, sellerView.mouldShrinkageDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.mouldShrinkage)}"/>
+
+                </p:column>
+
+                <p:column headerText="Moisture Content" sortBy="#{recycled.moistureContent.value}" visible="#{sellerView.activeColumns1[35]}" filterBy="#{recycled.moistureContent.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterLEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.moistureContent.value}" max="#{sellerView.moistMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.moistMin}" styleClass="custom-filter" stepFactor="#{sellerView.moistStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.moistDecimal}" minFractionDigits="#{sellerView.moistDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.moistureContent.value, sellerView.moistDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.moistureContent)}"/>
+                </p:column>
+
+                <p:column headerText="Ash Content" sortBy="#{recycled.ashContent.value}" visible="#{sellerView.activeColumns1[36]}" filterBy="#{recycled.ashContent.value}" filterMatchMode="exact" filterFunction="#{sellerView.filterLEQ}" >
+                    <f:facet name="filter">
+                        <p:spinner value="#{sellerView.currentRequest.ashContent.value}" max="#{sellerView.ashMax}" onkeyup="PF('recycledTable').filter()" onchange="PF('recycledTable').filter()" min="#{sellerView.ashMin}" styleClass="custom-filter" stepFactor="#{sellerView.ashStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{sellerView.ashDecimal}" minFractionDigits="#{sellerView.ashDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(recycled.ashContent.value, sellerView.ashDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycled.ashContent)}"/>
+                </p:column>
+
+
+                <p:column style="width:2rem;text-align: center" toggleable="false">
+                    <p:commandButton disabled="#{!sellerView.canHandleSelected(recycled)}" update="editForm:recycledDetails" oncomplete="PF('recycledsDialog').show()"
+                                     icon="pi pi-pencil" process="recycleds" title="edit">
+                        <f:setPropertyActionListener value="#{recycled}"
+                                                     target="#{sellerView.selectedRecycled}"/>
+
+                    </p:commandButton>
+
+                </p:column>
+                <p:column style="width:2rem;text-align: center;padding-left: 0" toggleable="false">
+                    <p:commandButton disabled="#{!sellerView.canHandleSelected(recycled)}" update="recycleds" process="recycleds" action="#{sellerView.deleteRecycled()}"
+                                     icon="pi pi-times-circle" title="delete">
+                        <p:confirm header="Confirmation" message="Do you want to delete this record?" icon="pi pi-info-circle"/>
+                        <f:setPropertyActionListener value="#{recycled}"
+                                                     target="#{sellerView.selectedRecycled}"/>
+                    </p:commandButton>
+                </p:column>
+
+                <p:rowExpansion>
+                    <div class="recycled">
+                        <p:growl id="msg"/>
+                        <div class="recycled-list-item">
+                            <div class="recycled-list-detail">
+                                <h4 style="margin-top:0">
+                                    <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,recycleds" oncomplete="PF('contextDialog').show()" value="Get in contact per mail" icon="pi pi-users">
+                                        <!-- <p:confirm header="Confirmation" message="You will receive the contact of the converter per mail. Please wait a few minutes before requesting again and check your spam folder." icon="pi pi-info-circle"/> -->
+                                    </p:commandButton>
+                                    <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,recycleds" rendered="#{recycled.testedBy != PSP}" action="#{sellerView.requestMaterialVerification(loginService.currentUser, recycled)}" value="Request Testing by PSP" icon="pi pi-id-card">
+                                        <p:confirm header="Confirmation" message="PSP will receive a request and will contact you with more information and an offer. Abusing this function can lead to costs and a ban!" icon="pi pi-info-circle"/>
+                                    </p:commandButton>
+                                    <p  style="text-align:left;">
+                                        Material Details: 
+                                        <span style="float:right;">
+                                            Show Unknown Properties
+                                            <p:toggleSwitch style="float:right;" value="#{sellerView.showUnknownProperties}">
+                                                <p:ajax update="propertiesPanel" process="@this"/>
+                                            </p:toggleSwitch>
+                                        </span>
+                                    </p>
+                                </h4>
+
+                                <p:panelGrid  columns="6" layout="grid" id="propertiesPanel">
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.supplier != null}" style="font-weight: bold;">Supplier</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.supplier != null)}" >#{formatterService.formatOutput(recycled.supplier, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.testedBy != null}" style="font-weight: bold;">Tested By</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.testedBy != null}" >#{formatterService.formatOutput(recycled.testedBy, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.material.name != null}" style="font-weight: bold;">Polymer Type</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.material.name != null}">#{formatterService.formatOutput(recycled.material.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.processTech.name != null}" style="font-weight: bold;">Process Technology</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.processTech.name != null}" >#{formatterService.formatOutput(recycled.processTech.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.particleGeometry.name != null}" style="font-weight: bold;">Particle Geometry</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.particleGeometry.name != null}" >#{formatterService.formatOutput(recycled.particleGeometry.name, 0)}</p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.meltFiltrationSize.value != null}" style="font-weight: bold;">Melt Filtration Size</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.meltFiltrationSize.value != null}" >#{formatterService.formatVariationWithConversion(recycled.meltFiltrationSize, null, sellerView.MFIDecimal)} <em>#{formatterService.formatUnit(recycled.meltFiltrationSize)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.modificationContent.valueMin != null}" style="font-weight: bold;">Modification Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.modificationContent.valueMin!= null}" >#{formatterService.formatVariationWithConversion(recycled.modificationContent, null, sellerView.modificationDecimal)} <em>#{formatterService.formatUnit(recycled.modificationContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.polymerModifications.name != null}" style="font-weight: bold;">Polymer Modifications</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.polymerModifications.name != null}" >#{formatterService.formatOutput(recycled.polymerModifications.name, 0)}</p:column>
+
+                                    <p:column style="font-weight: bold;" rendered="#{(recycled.material.name ne 'pvc')}" >MFI  (#{recycled.currentMFICondition.toString()})</p:column>
+                                    <p:column style="font-weight: bold;" rendered="#{(recycled.material.name eq 'pvc')}" >K Value</p:column>
+
+                                    <p:column rendered="#{(recycled.material.name ne 'pvc')}" >#{formatterService.formatVariationWithConversion(recycled.MFI, null, sellerView.MFIDecimal)} <em>#{formatterService.formatUnit(recycled.MFI)}</em></p:column>
+                                    <p:column rendered="#{(recycled.material.name eq 'pvc')}" >#{formatterService.formatVariationWithConversion(recycled.KValue, null, sellerView.kvalueDecimal)}</p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.charpyTensileStr.value != null}" style="font-weight: bold;">Charpy Impact Strength (#{recycled.currentCharpyImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.charpyTensileStr.value != null) and (formatterService.formatOutput(recycled.charpyTensileStr.variation, sellerView.charpyDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.charpyTensileStr.value, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycled.charpyTensileStr.variation, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} <em>#{formatterService.formatUnit(recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.charpyTensileStr.value != null) and (formatterService.formatOutput(recycled.charpyTensileStr.variation, sellerView.charpyDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.charpyTensileStr.value, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} <em>#{formatterService.formatUnit(recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulus.valueMin != null}" style="font-weight: bold;">E-Modulus</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulusTD.valueMin != null}" style="font-weight: bold;">E-Modulus TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulusTD.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulusMD.valueMin != null}" style="font-weight: bold;">E-Modulus MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.EModulusMD.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.flexuralModulus.valueMin != null}" style="font-weight: bold;">Flexural Modulus</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.flexuralModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit, sellerView.flexuralModulusDecimal)} <em>#{formatterService.formatUnit(recycled.flexuralModulus, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYield.value != null}" style="font-weight: bold;">Stength at Yield</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYield.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYieldTD.value != null}" style="font-weight: bold;">Stength at Yield TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYieldTD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.tensileStrenghtAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileStrenghtAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYieldMD.value != null}" style="font-weight: bold;">Stength at Yield MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileStrenghtAtYieldMD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYield.value != null}" style="font-weight: bold;">Strain at Yield</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYield.value != null}" >#{formatterService.formatOutput(recycled.tensileElongationAtYield.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileElongationAtYield)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYieldTD.value != null}" style="font-weight: bold;">Strain at Yield TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYieldTD.value != null}" >#{formatterService.formatOutput(recycled.tensileElongationAtYieldTD.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileElongationAtYieldTD)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYieldMD.value != null}" style="font-weight: bold;">Strain at Yield MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.tensileElongationAtYieldMD.value != null}" >#{formatterService.formatOutput(recycled.tensileElongationAtYieldMD.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycled.tensileElongationAtYieldMD)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreak.value != null}" style="font-weight: bold;">Strain at Break</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreak.value != null}" >#{formatterService.formatOutput(recycled.elongationAtBreak.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycled.elongationAtBreak)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreakTD.value != null}" style="font-weight: bold;">Strain at Break TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreakTD.value != null}" >#{formatterService.formatOutput(recycled.elongationAtBreakTD.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycled.elongationAtBreakTD)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreakMD.value != null}" style="font-weight: bold;">Strain at Break MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.elongationAtBreakMD.value != null}" >#{formatterService.formatOutput(recycled.elongationAtBreakMD.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycled.elongationAtBreakMD)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.recyclingContent.value != null}" style="font-weight: bold;">Recycling Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.recyclingContent.value != null}" >#{formatterService.formatOutput(recycled.recyclingContent.value, sellerView.recyclingDecimal)} <em>#{formatterService.formatUnit(recycled.recyclingContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.density.valueMin != null}" style="font-weight: bold;">Density</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.density.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.density, sellerView.user.config.densityPrefferedUnit, sellerView.recyclingDecimal)} <em>#{formatterService.formatUnit(recycled.density, sellerView.user.config.densityPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.bulkDensity.valueMin != null}" style="font-weight: bold;">Bulk Density</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.bulkDensity.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit, sellerView.adensityDecimal)} <em>#{formatterService.formatUnit(recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.izodTensileStr.value != null}" style="font-weight: bold;">Izod Impact Strength (#{recycled.currentIzodImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.izodTensileStr.value != null) and (formatterService.formatOutput(recycled.izodTensileStr.variation, sellerView.izodDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.izodTensileStr.value, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycled.izodTensileStr.unit), sellerView.izodDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycled.izodTensileStr.variation, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycled.izodTensileStr.unit), sellerView.izodDecimal)} <em>#{formatterService.formatUnit(recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.izodTensileStr.value != null) and (formatterService.formatOutput(recycled.izodTensileStr.variation, sellerView.izodDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.izodTensileStr.value, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycled.izodTensileStr.unit), sellerView.izodDecimal)} <em>#{formatterService.formatUnit(recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.hardnes.valueMin != null}" style="font-weight: bold;">Hardness (#{recycled.currentHardness.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.hardnes.valueMin != null)}" >#{formatterService.formatVariationWithConversion(recycled.hardnes.valueMin, null, sellerView.hardnessDecimal)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.vicat.value != null}" style="font-weight: bold;">Vicat (#{recycled.currentVicatCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.vicat.value != null) and (formatterService.formatOutput(recycled.vicat.variation, sellerView.vicatDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.vicat.value, sellerView.user.config.vicatPrefferedUnit, recycled.vicat.unit), sellerView.vicatDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycled.vicat.variation, sellerView.user.config.vicatPrefferedUnit, recycled.vicat.unit), sellerView.vicatDecimal)} <em>#{formatterService.formatUnit(recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycled.vicat.value != null) and (formatterService.formatOutput(recycled.vicat.variation, sellerView.vicatDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.vicat.value, sellerView.user.config.vicatPrefferedUnit, recycled.vicat.unit), sellerView.vicatDecimal)}  <em>#{formatterService.formatUnit(recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.hdt.value != null}" style="font-weight: bold;">HDT</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.hdt.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycled.hdt, sellerView.user.config.HDTPrefferedUnit), sellerView.HDTDecimal)} <em>#{formatterService.formatUnit(recycled.hdt, sellerView.user.config.HDTPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.oit.value != null}" style="font-weight: bold;">OIT</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.oit.value != null}" >#{formatterService.formatOutput(recycled.oit.value, sellerView.OITDecimal)} <em>#{formatterService.formatUnit(recycled.oit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.moistureContent.value != null}" style="font-weight: bold;">Moisture Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.moistureContent.value != null}" >#{formatterService.formatOutput(recycled.moistureContent.value, sellerView.moistDecimal)} <em>#{formatterService.formatUnit(recycled.moistureContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.ashContent.value != null}" style="font-weight: bold;">Ash Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.ashContent.value != null}" >#{formatterService.formatOutput(recycled.ashContent.value, sellerView.ashDecimal)} <em>#{formatterService.formatUnit(recycled.ashContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.color.name != null}" style="font-weight: bold;">Color</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.color.name != null}" >#{formatterService.formatOutput(recycled.color.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.pollution.value != null}" style="font-weight: bold;">Pollution</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.pollution.value != null}" >#{formatterService.formatOutput(recycled.pollution.value, sellerView.pollutionDecimal)} <em>#{formatterService.formatUnit(recycled.pollution)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.mouldShrinkage.valueMin != null}" style="font-weight: bold;">Mould Shrinkage</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycled.mouldShrinkage.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycled.mouldShrinkage, null, sellerView.mouldShrinkageDecimal)} <em>#{formatterService.formatUnit(recycled.mouldShrinkage)}</em></p:column>
+
+                                </p:panelGrid>
+                                <div class="ui-g" style="padding-left: 6px">
+                                    <div class="ui-g-3">
+                                        <p style="display: inline;font-weight: bold;">Comments</p>
+                                    </div>
+                                    <div class="ui-g-12">
+                                        <p:inputTextarea readonly="true" value="#{recycled.comments}" autoResize="false" style="height: 8rem;width: 100% !important;max-height: 8rem">
+                                        </p:inputTextarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </p:rowExpansion>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            </p:confirmDialog>
+        </h:form>
+
+        <p:dialog id="editDialog" header="Recyclate Edit" widgetVar="recycledsDialog" modal="true" resizable="false" height="70%" width="60%" closable="false" draggable="false">
+            <h:form id="editForm" > 
+                <h4 style="float: top">
+                    <p:outputLabel class="toggleswitch-box" value="Show Unknown Properties" />
+                    <p:toggleSwitch style="margin-top: 7px;position: absolute;left: 230px;top: 10px;" value="#{sellerView.showUnknownProperties}">
+                        <p:ajax update="recycledDetails" process="@this"/>
+                    </p:toggleSwitch>
+                </h4>
+                <p:outputPanel id="recycledDetails" style="float:center;overflow-y: auto;height: 72vh;">
+                    <p:column rendered="#{not empty sellerView.selectedRecycled}">
+                        <div class="product">
+                            <div class="product-grid-item border-0">
+                                <p:panelGrid  style="float:center" columns="1" layout="grid" id="propertiesPanel">
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.supplier != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Supplier</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:inputText transient="false" widgetVar="editSupplier" autocomplete="off" id="editSupplier" style="width: 100% !important;" value="#{sellerView.selectedRecycled.supplier}">
+                                                    <p:ajax event="valueChange" process="@this"/>
+                                                </p:inputText>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.testedBy != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Tested By</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:inputText style="width: 100% !important;" disabled="#{not loginService.currentUser.adminTag}" value="#{sellerView.selectedRecycled.testedBy}">
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:inputText>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.material.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Polymer Type</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.material}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{sellerView.distinctMaterials}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.particleGeometry.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Particle Geometry</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.particleGeometry}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{sellerView.distinctParticleGeo}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.processTech.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Process Technology</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.processTech}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{sellerView.distinctProcessTechs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.meltFiltrationSize.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Melt Filtration Size</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.meltFiltrationSize.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.metersUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.meltFiltrationSize.value}" min="#{sellerView.meltFiltrationMin}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{sellerView.meltFiltrationStep}" max="#{sellerView.meltFiltrationMax}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.modificationContent.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Modification Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.modificationContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, modificationContentMinEditor,modificationContentMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="modificationContentMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.modificationContent.valueMin}" min="#{sellerView.modificationMin}" styleClass="custom-filter"  max="#{sellerView.modificationMax}" stepFactor="#{sellerView.modificationStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,modificationContentMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="modificationContentMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.modificationContent.variation}" min="#{sellerView.modificationMin}" styleClass="custom-filter" max="#{sellerView.modificationMax}" stepFactor="#{sellerView.modificationStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,modificationContentMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.polymerModifications.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Polymer Modification</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.polymerModifications}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{sellerView.distinctPolyMods}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{(sellerView.selectedRecycled.material.name ne 'pvc')}" >
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">MFI</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.currentMFICondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctMFIWeights}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mfiMinEditor,mfiMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.MFI.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.MFIUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mfiMinEditor,mfiMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="mfiMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.MFI.valueMin}" min="#{sellerView.MFIMin}" styleClass="custom-filter"  max="#{sellerView.MFIMax}" stepFactor="#{sellerView.MFIStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,mfiMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="mfiMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.MFI.variation}" min="#{sellerView.MFIMin}" styleClass="custom-filter" max="#{sellerView.MFIMax}" stepFactor="#{sellerView.MFIStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,mfiMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{(sellerView.selectedRecycled.material.name eq 'pvc')}" >
+                                        <div class="ui-g">
+
+                                            <div class="ui-g">
+                                                <div class="ui-g-3">
+                                                    <p style="display: inline">K Value</p>
+                                                </div>
+                                                <div class="ui-g-3" style="padding: 0">
+
+                                                </div>
+                                                <div class="ui-g-2" style="padding: 0">
+                                                    <p:spinner id="kvalueMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.KValue.valueMin}" min="#{sellerView.kvalueMin}" styleClass="custom-filter"  max="#{sellerView.kvalueMax}" stepFactor="#{sellerView.kvalueStep}">
+                                                        <f:converter converterId="javax.faces.Double" />
+                                                        <p:ajax event="valueChange" process="@this" update="@this,kvalueMaxEditor"/>
+                                                    </p:spinner>
+                                                </div>
+                                                <div class="ui-g-2" style="padding: 0">
+                                                    <div class="ui-g" style="padding: 0">
+                                                        <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                            <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                        </div>
+                                                        <div class="ui-g-11" style="padding: 0">
+                                                            <p:spinner id="kvalueMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.KValue.variation}" min="#{sellerView.kvalueMin}" styleClass="custom-filter" max="#{sellerView.kvalueMax}" stepFactor="#{sellerView.kvalueStep}">
+                                                                <f:converter converterId="javax.faces.Double" />
+                                                                <p:ajax event="valueChange" process="@this" update="@this,kvalueMinEditor"/>
+                                                            </p:spinner>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.charpyTensileStr.value != null}" >
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Charpy Impact Strength</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.currentCharpyImpactStrCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, charpyMinEditor,charpyMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.charpyTensileStr.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.impactSquareUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, charpyMinEditor,charpyMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="charpyMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.charpyTensileStr.value}" min="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(0.1, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" styleClass="custom-filter">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,charpyMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="charpyMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.charpyTensileStr.variation}" min="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(0.1, sellerView.selectedRecycled.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" styleClass="custom-filter">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,charpyMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.EModulus.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.EModulus.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMinEditor,EModulusMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulus.valueMin}" min="#{sellerView.EModulusMin}" styleClass="custom-filter"  max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulus.variation}" min="#{sellerView.EModulusMin}" styleClass="custom-filter" max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.EModulusTD.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.EModulusTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMinTDEditor,EModulusTDMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMinTDEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulusTD.valueMin}" min="#{sellerView.EModulusMin}" styleClass="custom-filter"  max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusTDMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusTDMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulusTD.variation}" min="#{sellerView.EModulusMin}" styleClass="custom-filter" max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMinTDEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.EModulusMD.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.EModulusMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMDMinEditor,EModulusMDMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMDMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulusMD.valueMin}" min="#{sellerView.EModulusMin}" styleClass="custom-filter"  max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusMDMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusMDMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.EModulusMD.variation}" min="#{sellerView.EModulusMin}" styleClass="custom-filter" max="#{sellerView.EModulusMax}" stepFactor="#{sellerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMDMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.flexuralModulus.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Flexural Modulus</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.flexuralModulus.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, flexuralModulusMinEditor,flexuralModulusMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="flexuralModulusMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.flexuralModulus.valueMin}" min="#{sellerView.flexuralModulusMin}" styleClass="custom-filter"  max="#{sellerView.flexuralModulusMax}" stepFactor="#{sellerView.flexuralModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,flexuralModulusMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="flexuralModulusMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.flexuralModulus.variation}" min="#{sellerView.flexuralModulusMin}" styleClass="custom-filter" max="#{sellerView.flexuralModulusMax}" stepFactor="#{sellerView.flexuralModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,flexuralModulusMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileStrenghtAtYield.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileStrenghtAtYield.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileStrenghtAtYield.value}" min="#{unitConverterService.convertUnit(5, sellerView.selectedRecycled.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, sellerView.selectedRecycled.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileStrenghtAtYieldTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileStrenghtAtYieldTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileStrenghtAtYieldTD.value}" min="#{unitConverterService.convertUnit(5, sellerView.selectedRecycled.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, sellerView.selectedRecycled.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileStrenghtAtYieldMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileStrenghtAtYieldMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileStrenghtAtYieldMD.value}" min="#{unitConverterService.convertUnit(5, sellerView.selectedRecycled.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, sellerView.selectedRecycled.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileElongationAtYield.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileElongationAtYield.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileElongationAtYield.value}" styleClass="custom-filter" style="width: 100% !important;" min="#{sellerView.strainAtYieldMin}" max="#{sellerView.strainAtYieldMax}" stepFactor="#{sellerView.strainAtYieldStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileElongationAtYieldTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileElongationAtYieldTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileElongationAtYieldTD.value}" min="#{sellerView.strainAtYieldMin}" max="#{sellerView.strainAtYieldMax}" stepFactor="#{sellerView.strainAtYieldStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.tensileElongationAtYieldMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.tensileElongationAtYieldMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.tensileElongationAtYieldMD.value}" min="#{sellerView.strainAtYieldMin}" max="#{sellerView.strainAtYieldMax}" stepFactor="#{sellerView.strainAtYieldStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.elongationAtBreak.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.elongationAtBreak.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.elongationAtBreak.value}" min="#{sellerView.strainAtBreakMin}" max="#{sellerView.strainAtBreakMax}" stepFactor="#{sellerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.elongationAtBreakTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.elongationAtBreakTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.elongationAtBreakTD.value}" min="#{sellerView.strainAtBreakMin}" max="#{sellerView.strainAtBreakMaxMDTD}" stepFactor="#{sellerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.elongationAtBreakMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.elongationAtBreakMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.elongationAtBreakMD.value}" min="#{sellerView.strainAtBreakMin}" max="#{sellerView.strainAtBreakMaxMDTD}" stepFactor="#{sellerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.color.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Color</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.color}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{sellerView.distinctColors}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.pollution.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Pollution Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.pollution.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.pollution.value}" min="#{sellerView.pollutionMin}" max="#{sellerView.pollutionMax}" stepFactor="#{sellerView.pollutionStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.mouldShrinkage.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Mould Shrinkage</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.mouldShrinkage.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mouldShrinkageMinEditor,mouldShrinkageMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="mouldShrinkageMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.mouldShrinkage.valueMin}" min="#{sellerView.mouldShrinkageMin}" styleClass="custom-filter"  max="#{sellerView.mouldShrinkageMax}" stepFactor="#{sellerView.mouldShrinkageStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,mouldShrinkageMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="mouldShrinkageMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.mouldShrinkage.variation}" min="#{sellerView.mouldShrinkageMin}" styleClass="custom-filter" max="#{sellerView.mouldShrinkageMax}" stepFactor="#{sellerView.mouldShrinkageStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,mouldShrinkageMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.recyclingContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Recycling Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.recyclingContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner id="editRecyclecContent" value="#{sellerView.selectedRecycled.recyclingContent.value}" min="#{sellerView.recyclingMin}" max="#{sellerView.recyclingMax}" stepFactor="#{sellerView.recyclingStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.density.valueMin != null}" style="font-weight: bold;margin-top: 7pt;"> 
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Density</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.density.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.densityUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, densityMinEditor,densityMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="densityMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.density.valueMin}" min="#{sellerView.densityMin}" styleClass="custom-filter"  max="#{sellerView.densityMax}" stepFactor="#{sellerView.densityStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,densityMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="densityMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.density.variation}" min="#{sellerView.densityMin}" styleClass="custom-filter" max="#{sellerView.densityMax}" stepFactor="#{sellerView.densityStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,densityMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.bulkDensity.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Bulk Density</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.bulkDensity.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.densityUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, adensityMinEditor,adensityMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="adensityMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.bulkDensity.valueMin}" min="#{sellerView.adensityMin}" styleClass="custom-filter"  max="#{sellerView.adensityMax}" stepFactor="#{sellerView.adensityStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,adensityMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="adensityMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.bulkDensity.variation}" min="#{sellerView.adensityMin}" styleClass="custom-filter" max="#{sellerView.adensityMax}" stepFactor="#{sellerView.adensityStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,adensityMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.izodTensileStr.value != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Izod Impact Strength</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.currentIzodImpactStrCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, izodMinEditor,izodMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.izodTensileStr.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.impactNoneSquareUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, izodMinEditor,izodMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="izodMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.izodTensileStr.value}" min="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" max="#{unitConverterService.convertUnit(500, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" styleClass="custom-filter"  stepFactor="#{unitConverterService.convertUnit(5, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,izodMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="izodMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.izodTensileStr.variation}" min="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" max="#{unitConverterService.convertUnit(500, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" styleClass="custom-filter" stepFactor="#{unitConverterService.convertUnit(5, sellerView.selectedRecycled.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,izodMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.hardnes.valueMin != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Hardness</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.currentHardness}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctHardness}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, hardnessMinEditor,hardnessMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="hardnessMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.hardnes.valueMin}" min="#{sellerView.hardnessMin}" styleClass="custom-filter"  max="#{sellerView.hardnessMax}" stepFactor="#{sellerView.hardnessStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,hardnessMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="hardnessMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.hardnes.variation}" min="#{sellerView.hardnessMin}" max="#{sellerView.hardnessMax}" styleClass="custom-filter" stepFactor="#{sellerView.hardnessStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,hardnessMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.vicat.value != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Vicat</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{sellerView.selectedRecycled.currentVicatCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctVicats}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, vicatMinEditor,vicatMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.vicat.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.temperatureUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, vicatMinEditor,vicatMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="vicatMinEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.vicat.value}" min="#{unitConverterService.convertUnit(20, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter"  max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,vicatMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="vicatMaxEditor" style="width: 100% !important;" value="#{sellerView.selectedRecycled.vicat.variation}" min="#{unitConverterService.convertUnit(20, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter" stepFactor="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,vicatMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.hdt.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">HDT</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.hdt.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.temperatureUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.hdt.value}" min="#{unitConverterService.convertUnit(20, sellerView.selectedRecycled.hdt.unit, propertiesSideInfos.temperatureUnits.get(0))}" max="#{unitConverterService.convertUnit(200, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{unitConverterService.convertUnit(1, sellerView.selectedRecycled.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.oit.value != null}" style="font-weight: bold;margin-top: 7pt;"> 
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">OIT</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.oit.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.timeUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.oit.value}" min="#{sellerView.OITMin}" max="#{sellerView.OITMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{sellerView.OITStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.moistureContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Moisture Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.moistureContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.moistureContent.value}" min="#{sellerView.moistMin}" max="#{sellerView.moistMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{sellerView.moistStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || sellerView.selectedRecycled.ashContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Ash Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{sellerView.selectedRecycled.ashContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{sellerView.selectedRecycled.ashContent.value}" min="#{sellerView.ashMin}" max="#{sellerView.ashMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{sellerView.ashStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Comments</p>
+                                            </div>
+
+
+                                            <div class="ui-g-12" style="padding: 0">
+                                                <p:inputTextarea value="#{sellerView.selectedRecycled.comments}" style="height: 150rem;width: 100% !important;">
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:inputTextarea>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                </p:panelGrid>
+
+                            </div>
+                        </div>
+                    </p:column>
+                </p:outputPanel>
+                <p:commandButton class="commandButtonStyle" update="propertiesPanel,providerView" process="@this"  action="#{sellerView.updateInstance()}" style="margin-right: 5px" oncomplete="PF('recycledsDialog').hide()" value="Save">
+                </p:commandButton>
+                <p:commandButton class="commandButtonStyle" value="Discard" process="@this" oncomplete="PF('recycledsDialog').hide()"
+                                 action="#{sellerView.resetForm()}"/>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="uploadDialog" header="Upload Recycled Data File" widgetVar="uploadDialog" modal="true" resizable="false" height="30%" width="50%" closable="false">
+            <h:form id="uploadForm" >
+
+                <p:fileUpload listener="#{sellerView.handleFileUpload}" mode="advanced" dragDropSupport="false"
+                              update="messages" sizeLimit="100000" allowTypes="/(\.|\/)(csv|xls?x|txt)$/"
+                              accept=".csv,.xls,.xlsx,.txt"
+                              onupload="return confirm('Are you sure?')"/>
+
+                <p:growl id="messages" showDetail="true"/>
+                <p:commandButton class="commandButtonStyle" value="Close" process="@this" update="providerView:recycleds" oncomplete="PF('uploadDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="contextDialog" header="Provide the context of your search" widgetVar="contextDialog" modal="true" resizable="false" height="30%" width="50%" closable="true">
+            <h:form id="contextForm" >
+                <p:outputLabel for="@next" value="What is your industrial context?" />
+                <p:selectOneMenu value="#{sellerView.contactTargetIndustry}" styleClass="custom-filter" converter="objectConverter">
+                    <f:selectItem itemLabel="-- please select one --" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{sellerView.distinctTargetMarkets}" />
+                    <p:ajax event="itemSelect" update="@this,contextForm" process="@this,contextForm"/>
+                </p:selectOneMenu>
+                <br/>
+                <p:outputLabel  for="@next" value="For which kind of product do you want to use this plasics for?" />
+
+                <p:selectOneMenu value="#{sellerView.contactTargetProduct}" styleClass="custom-filter" converter="objectConverter">
+                    <f:selectItem itemLabel="-- please select one --" itemValue="#{null}" noSelectionOption="true" />
+                    <f:selectItems value="#{sellerView.distinctTargetProducts}" />
+                    <p:ajax event="itemSelect" update="@this,contextForm" process="@this,contextForm"/>
+                </p:selectOneMenu>
+
+                <br/>
+                <p:card>
+                    <p:outputLabel value="By pressing submit you accept that your email address will be send to the to be contacted company. When and how they respond is not something in our responsibility." />
+                </p:card>
+                <p:growl id="messages" showDetail="true"/>
+                <p:commandButton id="submitCOntext" class="commandButtonStyle" value="Submit" disabled="#{sellerView.checkForEnableContextSubmit()}" process="@this,@form" update="@form" action="#{sellerView.getContact(loginService.currentUser, sellerView.selectedRecycled)}" oncomplete="PF('contextDialog').hide()"/>
+                <p:commandButton class="commandButtonStyle" value="Discard" action="#{sellerView.resetForm('contextForm')}" process="@this" oncomplete="PF('contextDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+    </f:view>
+    <ui:include src="/datatable-seller-ranking.xhtml" /> 
+    <ui:include src="/footer.xhtml" />
+</html>

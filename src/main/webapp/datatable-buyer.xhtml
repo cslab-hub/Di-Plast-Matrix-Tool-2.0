@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:my="http://xmlns.domain.my/jsf/component"
+      xmlns:cc="http://java.sun.com/jsf/composite/components"
+      >
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8" locale="en-US">
+        <h:head>
+            <style type="text/css">
+                .ui-filter-column .ui-column-customfilter .custom-filter {
+                    width: 100%;
+                    box-sizing: border-box;
+                    margin-bottom: 3px;
+                }
+                .ui-sortable-column-icon {
+                    float: top !important;
+                    position: relative !important;
+                }
+                .ui-datatable-hor-scroll .ui-datatable-tablewrapper,.scrolling-div .ui-datatable-tablewrapper{
+                    overflow: auto;
+                    width: 100%;
+                    padding-bottom: 5px;
+                }
+                th {
+                    vertical-align: bottom;
+                }
+                .commandButtonStyle {
+                    margin: 10px;
+                }
+                .ui-column-filter {
+                    vertical-align: bottom;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    margin-bottom: 3px !important;
+                }
+                toggleswitch-box {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    height: 1.75em;
+                }
+                .toggleswitch-box.toggleswitch-box-border {
+                    padding: 5px 5px;
+                    border-style: solid;
+                    border-color: #00aae1;
+                    border-width: 1px;
+                    border-radius: 50px; 
+                }
+                .toggleswitch-box.toggleswitch-box-border:hover {
+                    border-color: #673AB7;
+                    border-width: 2px; 
+                }
+                .ui-toggleswitch {
+                    vertical-align: central;
+                    margin-left: 7px;
+                }
+                .ui-selectonemenu{
+                    width: 100% !important;
+                }
+                .ui-selectonemenu-label{
+                    width: 100% !important;
+                }
+            </style>
+            <ui:include src="/tabs.xhtml" />
+        </h:head>
+        <h:form id="providerViewB"><!-- // -->
+            <p:messages id="messages" showDetail="true">
+                <p:autoUpdate/>
+            </p:messages>
+            <p:dataTable id="requestss" var="requests" value="#{buyerView.requests}" rows="10" widgetVar="requestsTable" sortMode="single" multiViewState="false"
+                         paginator="true" 
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"
+                         rowsPerPageTemplate="5,10,20,30,50,{ShowAll|'All'}"
+                         paginatorPosition ="bottom"
+                         emptyMessage="No product found with given criteria" 
+                         filteredValue="#{buyerView.filteredRequests}"
+                         stickyHeader="true" 
+                         rowKey="#{requests.id}"
+                         selection="#{buyerView.selectedRequest}"
+                         >
+
+                <f:facet name="header">
+                    <div class="p-d-flex p-jc-between p-ai-center">
+                        <h1 style="font-size:23px;">List of Requested Material
+
+                            <span style="float:right">
+                                <span class="toggleswitch-box">
+                                    <p:outputLabel rendered="#{loginService.currentUser.adminTag}" for="" value="Show resolved requests" />
+                                    <p:toggleSwitch rendered="#{loginService.currentUser.adminTag}" style="margin-right: 10pt;margin-bottom: -5pt" value="#{buyerView.showResolved}" onchange="#{buyerView.reloadData(loginService.currentUser)}" >
+                                        <p:ajax update="providerViewB" oncomplete="PF('requestsTable').filter()"/>
+                                    </p:toggleSwitch>
+                                </span>
+                                <span class="toggleswitch-box">
+                                    <p:outputLabel rendered="#{loginService.currentUser.adminTag}" for="" value="Show auto generated" />
+                                    <p:toggleSwitch rendered="#{loginService.currentUser.adminTag}" style="margin-right: 10pt;margin-bottom: -5pt" value="#{buyerView.showAutoGen}" onchange="#{buyerView.reloadData(loginService.currentUser)}" >
+                                        <p:ajax update="providerViewB" oncomplete="PF('requestsTable').filter()"/>
+                                    </p:toggleSwitch>
+                                </span>
+                                <span class="toggleswitch-box">
+                                    <p:outputLabel for="" value="Show only owned" />
+                                    <p:toggleSwitch style="margin-right: 10pt;margin-bottom: -5pt" value="#{buyerView.showOnlyOwned}" onchange="#{buyerView.reloadData(loginService.currentUser)}" >
+                                        <p:ajax update="providerViewB:requestss" oncomplete="PF('requestsTable').filter()"/>
+                                    </p:toggleSwitch>
+                                </span>
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,requestss" oncomplete="#{buyerView.initReset()}" update="requestss" value="Reset Filter" icon="pi pi-cloud-upload">
+                                </p:commandButton>
+
+
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this" oncomplete="PF('uploadDialog').show()" rendered="#{loginService.currentUser.adminTag}" value="Upload Data" icon="pi pi-cloud-upload"/>
+
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this" action="#{buyerView.newSelectedRequest(loginService.currentUser.username)}" oncomplete="PF('requestssDialog').show()" update="editDialogR" value="Create Request" icon="pi pi-plus-circle"/>
+
+                                <p:commandButton id="toggler" type="button" value="Columns" icon="pi pi-align-justify"/>
+                                <p:columnToggler datasource="requestss" trigger="toggler">
+                                    <p:ajax event="toggle" listener="#{buyerView.onToggle}"/>
+                                </p:columnToggler>
+                                <p:inputText id="globalFilter" onkeyup="PF('requestsTable').filter()" placeholder="Enter Global Search Key"/>
+                            </span>
+                        </h1>
+                    </div>
+                </f:facet>
+
+
+
+                <p:column style="width:2rem" toggleable="false">
+                    <p:rowToggler/>
+                </p:column>
+
+                <p:column headerText="Target Industry" sortBy="#{requests.context.targetMarket.name}" visible="#{buyerView.activeColumns1[37]}" filterBy="#{requests.context.targetMarket.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.context.targetMarket.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctTargetMarkets}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.context.targetMarket.name, 0)}"/>
+                </p:column>
+
+
+                <p:column headerText="Target Product Group" sortBy="#{requests.context.targetProduct.name}" visible="#{buyerView.activeColumns1[38]}" filterBy="#{requests.context.targetProduct.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.context.targetProduct.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctTargetProducts}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.context.targetProduct.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Polymer Type" sortBy="#{requests.material.name}" visible="#{buyerView.activeColumns1[0]}" filterBy="#{requests.material.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.material.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctMaterials}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatOutput(requests.material.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Tested By" sortBy="#{requests.testedBy}" visible="#{buyerView.activeColumns1[1]}" filterBy="#{requests.testedBy}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.testedBy}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctTestedBy}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.testedBy, 0)}"/>
+                </p:column>
+
+
+                <p:column headerText="Process Technology" sortBy="#{requests.processTech.name}" visible="#{buyerView.activeColumns1[3]}" filterBy="#{requests.processTech.name}" filterMatchMode="exact">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.processTech.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctProcessTechs}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.processTech.name, 0)}"/>
+                </p:column>                
+
+                <p:column headerText="Polymer Modifications" sortBy="#{requests.polymerModifications.name}" visible="#{buyerView.activeColumns1[4]}" filterBy="#{requests.polymerModifications.name}" filterMatchMode="contains" >
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('requestsTable').filter()" value="#{buyerView.currentRequest.polymerModifications.name}" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctPolyMods}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.polymerModifications.name, 0)}"/>
+
+                </p:column>
+
+                <p:column headerText="Modification Content" sortBy="#{requests.modificationContent.valueMin}" visible="#{buyerView.activeColumns1[5]}" filterBy="#{requests.modificationContent}" filterFunction="#{buyerView.filterByRange}">
+
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.modificationMin}" max="#{buyerView.modificationMax}" step="#{buyerView.modificationStep}" decimal="#{buyerView.modificationDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getModificationContent().getValueMin(),  buyerView.modificationMax, buyerView.modificationMin, buyerView.currentRequest.getModificationContent(), buyerView.modificationStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getModificationContent().getValueMax(), buyerView.modificationMin, buyerView.modificationMax, buyerView.currentRequest.getModificationContent(), buyerView.modificationStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getModificationContent().getValueMax(), buyerView.modificationMax, buyerView.modificationMin, buyerView.currentRequest.getModificationContent().getValueMin(), buyerView.currentRequest.getModificationContent(), buyerView.modificationStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getModificationContent().getValueMin(),   buyerView.modificationMin, buyerView.modificationMax, buyerView.currentRequest.getModificationContent().getValueMax(), buyerView.currentRequest.getModificationContent(), buyerView.modificationStep)}" value1="#{buyerView.currentRequest.modificationContent}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.modificationContent, null, buyerView.modificationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.modificationContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Particle Geometry" sortBy="#{requests.particleGeometry.name}" visible="#{buyerView.activeColumns1[6]}" filterBy="#{requests.particleGeometry.name}" filterMatchMode="contains" >
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.particleGeometry.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctParticleGeo}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.particleGeometry.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Melt Filtration Size" sortBy="#{requests.meltFiltrationSize.value}" visible="#{buyerView.activeColumns1[7]}" filterBy="#{requests.meltFiltrationSize.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterLEQ}" >
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.meltFiltrationSize.value}" max="#{buyerView.meltFiltrationMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.meltFiltrationMin}" styleClass="custom-filter" stepFactor="#{buyerView.meltFiltrationStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.meltFiltrationDecimal}" minFractionDigits="#{buyerView.meltFiltrationDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.meltFiltrationSize.value, buyerView.meltFiltrationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.meltFiltrationSize)}"/>
+                </p:column>
+
+
+                <p:column id="mfiColumn" headerText="MFI" visible="#{buyerView.activeColumns1[8]}" filterBy="#{requests.MFI}" sortBy="#{requests.MFI.valueMin}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.MFIMin}" max="#{buyerView.MFIMax}" step="#{buyerView.MFIStep}" decimal="#{buyerView.MFIDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getMFI().getValueMin(),  buyerView.MFIMax, buyerView.MFIMin, buyerView.currentRequest.getMFI(), buyerView.MFIStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getMFI().getValueMax(), buyerView.MFIMin, buyerView.MFIMax, buyerView.currentRequest.getMFI(), buyerView.MFIStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getMFI().getValueMax(), buyerView.MFIMax, buyerView.MFIMin, buyerView.currentRequest.getMFI().getValueMin(), buyerView.currentRequest.getMFI(), buyerView.MFIStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getMFI().getValueMin(),   buyerView.MFIMin, buyerView.MFIMax, buyerView.currentRequest.getMFI().getValueMax(), buyerView.currentRequest.getMFI(), buyerView.MFIStep)}" value1="#{buyerView.currentRequest.MFI}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.currentMFICondition}" hideNoSelectionOption="true" onchange="#{buyerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctMFIWeights}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('requestsTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.MFI, null, buyerView.MFIDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.MFI)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="K Value" filterValue="#{buyerView.currentRequest.KValue}" sortBy="#{requests.KValue.valueMin}" visible="#{buyerView.activeColumns1[9]}" filterBy="#{requests.KValue}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.kvalueMin}" max="#{buyerView.kvalueMax}" step="#{buyerView.kvalueStep}" decimal="#{buyerView.kvalueDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getKValue().getValueMin(),  buyerView.kvalueMax, buyerView.kvalueMin, buyerView.currentRequest.getKValue(), buyerView.kvalueStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getKValue().getValueMax(), buyerView.kvalueMin, buyerView.kvalueMax, buyerView.currentRequest.getKValue(), buyerView.kvalueStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getKValue().getValueMax(), buyerView.kvalueMax, buyerView.kvalueMin, buyerView.currentRequest.getKValue().getValueMin(), buyerView.currentRequest.getKValue(), buyerView.kvalueStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getKValue().getValueMin(),   buyerView.kvalueMin, buyerView.kvalueMax, buyerView.currentRequest.getKValue().getValueMax(), buyerView.currentRequest.getKValue(), buyerView.kvalueStep)}" value1="#{buyerView.currentRequest.KValue}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.KValue, null, buyerView.kvalueDecimal)} "/>
+                </p:column>
+
+
+                <p:column id="charpyColumn" headerText="Charpy Impact Strength" visible="#{buyerView.activeColumns1[10]}" filterBy="#{requests.charpyTensileStr.value}" sortBy="#{requests.charpyTensileStr.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.charpyTensileStr.value}" max="#{buyerView.charpyMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.charpyMin}" styleClass="custom-filter" stepFactor="#{buyerView.charpyStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.charpyDecimal}" minFractionDigits="#{buyerView.charpyDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.currentCharpyImpactStrCondition}" hideNoSelectionOption="true" onchange="#{buyerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('requestsTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.charpyTensileStr, buyerView.user.config.charpyImpactStrengthPrefferedUnit, buyerView.charpyDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.charpyTensileStr, buyerView.user.config.charpyImpactStrengthPrefferedUnit)}"/>
+
+
+                </p:column>
+
+                <p:column headerText="E-Modulus" sortBy="#{requests.EModulus.valueMin}" filterBy="#{unitConverterService.convertUnit(requests.EModulus, buyerView.user.config.EModulusPrefferedUnit)}" visible="#{buyerView.activeColumns1[11]}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.EModulusMin}" max="#{buyerView.EModulusMax}" step="#{buyerView.EModulusStep}" decimal="#{buyerView.EModulusDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getEModulus().getValueMin(),  buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulus(), buyerView.EModulusStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getEModulus().getValueMax(), buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulus(), buyerView.EModulusStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getEModulus().getValueMax(), buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulus().getValueMin(), buyerView.currentRequest.getEModulus(), buyerView.EModulusStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getEModulus().getValueMin(),   buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulus().getValueMax(), buyerView.currentRequest.getEModulus(), buyerView.EModulusStep)}" value1="#{buyerView.currentRequest.EModulus}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.EModulus, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.EModulus, buyerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column headerText="E-Modulus TD" sortBy="#{requests.EModulusTD.valueMin}" filterBy="#{unitConverterService.convertUnit(requests.EModulusTD, buyerView.user.config.EModulusPrefferedUnit)}" visible="#{buyerView.activeColumns1[12]}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.EModulusMin}" max="#{buyerView.EModulusMax}" step="#{buyerView.EModulusStep}" decimal="#{buyerView.EModulusDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getEModulusTD().getValueMin(),  buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulusTD(), buyerView.EModulusStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getEModulusTD().getValueMax(), buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulusTD(), buyerView.EModulusStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getEModulusTD().getValueMax(), buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulusTD().getValueMin(), buyerView.currentRequest.getEModulusTD(), buyerView.EModulusStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getEModulusTD().getValueMin(),   buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulusTD().getValueMax(), buyerView.currentRequest.getEModulusTD(), buyerView.EModulusStep)}" value1="#{buyerView.currentRequest.EModulusTD}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.EModulusTD, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.EModulusTD, buyerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="E-Modulus MD" sortBy="#{requests.EModulusMD.valueMin}" filterBy="#{unitConverterService.convertUnit(requests.EModulusMD, buyerView.user.config.EModulusPrefferedUnit)}" visible="#{buyerView.activeColumns1[13]}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.EModulusMin}" max="#{buyerView.EModulusMax}" step="#{buyerView.EModulusStep}" decimal="#{buyerView.EModulusDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getEModulusMD().getValueMin(),  buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulusMD(), buyerView.EModulusStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getEModulusMD().getValueMax(), buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulusMD(), buyerView.EModulusStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getEModulusMD().getValueMax(), buyerView.EModulusMax, buyerView.EModulusMin, buyerView.currentRequest.getEModulusMD().getValueMin(), buyerView.currentRequest.getEModulusMD(), buyerView.EModulusStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getEModulusMD().getValueMin(),   buyerView.EModulusMin, buyerView.EModulusMax, buyerView.currentRequest.getEModulusMD().getValueMax(), buyerView.currentRequest.getEModulusMD(), buyerView.EModulusStep)}" value1="#{buyerView.currentRequest.EModulusMD}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.EModulusMD, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.EModulusMD, buyerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Flexural Modulus" sortBy="#{requests.flexuralModulus.valueMin}" filterBy="#{unitConverterService.convertUnit(requests.flexuralModulus, buyerView.user.config.flexuralModulusPrefferdUnit)}" visible="#{buyerView.activeColumns1[14]}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.flexuralModulusMin}" max="#{buyerView.flexuralModulusMax}" step="#{buyerView.flexuralModulusStep}" decimal="#{buyerView.flexuralModulusDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getFlexuralModulus().getValueMin(),  buyerView.flexuralModulusMax, buyerView.flexuralModulusMin, buyerView.currentRequest.getFlexuralModulus(), buyerView.flexuralModulusStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getFlexuralModulus().getValueMax(), buyerView.flexuralModulusMin, buyerView.flexuralModulusMax, buyerView.currentRequest.getFlexuralModulus(), buyerView.flexuralModulusStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getFlexuralModulus().getValueMax(), buyerView.flexuralModulusMax, buyerView.flexuralModulusMin, buyerView.currentRequest.getFlexuralModulus().getValueMin(), buyerView.currentRequest.getFlexuralModulus(), buyerView.flexuralModulusStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getFlexuralModulus().getValueMin(),   buyerView.flexuralModulusMin, buyerView.flexuralModulusMax, buyerView.currentRequest.getFlexuralModulus().getValueMax(), buyerView.currentRequest.getFlexuralModulus(), buyerView.flexuralModulusStep)}" value1="#{buyerView.currentRequest.flexuralModulus}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.flexuralModulus, buyerView.user.config.flexuralModulusPrefferdUnit, buyerView.flexuralModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.flexuralModulus, buyerView.user.config.flexuralModulusPrefferdUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield" sortBy="#{requests.tensileStrenghtAtYield.value}" visible="#{buyerView.activeColumns1[15]}" filterBy="#{unitConverterService.convertUnit(requests.tensileStrenghtAtYield, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileStrenghtAtYield.value}" max="#{buyerView.strengthAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strengthAtYieldDecimal}" minFractionDigits="#{buyerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.tensileStrenghtAtYield, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit, buyerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileStrenghtAtYield, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield TD" sortBy="#{requests.tensileStrenghtAtYieldTD.value}" visible="#{buyerView.activeColumns1[16]}" filterBy="#{unitConverterService.convertUnit(requests.tensileStrenghtAtYieldTD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileStrenghtAtYieldTD.value}" max="#{buyerView.strengthAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strengthAtYieldDecimal}" minFractionDigits="#{buyerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.tensileElongationAtYieldTD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit, buyerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileElongationAtYieldTD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield MD" sortBy="#{requests.tensileStrenghtAtYieldMD.value}" visible="#{buyerView.activeColumns1[17]}" filterBy="#{unitConverterService.convertUnit(requests.tensileStrenghtAtYieldMD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileStrenghtAtYieldMD.value}" max="#{buyerView.strengthAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strengthAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strengthAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strengthAtYieldDecimal}" minFractionDigits="#{buyerView.strengthAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.tensileStrenghtAtYieldMD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit, buyerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileStrenghtAtYieldMD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Yield" sortBy="#{requests.tensileElongationAtYield.value}" visible="#{buyerView.activeColumns1[18]}" filterBy="#{requests.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileElongationAtYield.value}" max="#{buyerView.strainAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtYieldDecimal}" minFractionDigits="#{buyerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.tensileElongationAtYield.value, buyerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileElongationAtYield)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield TD" sortBy="#{requests.tensileElongationAtYieldTD.value}" visible="#{buyerView.activeColumns1[19]}" filterBy="#{requests.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileElongationAtYieldTD.value}" max="#{buyerView.strainAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtYieldDecimal}" minFractionDigits="#{buyerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.tensileElongationAtYieldTD.value, buyerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileElongationAtYieldTD)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield MD" sortBy="#{requests.tensileElongationAtYieldMD.value}" visible="#{buyerView.activeColumns1[29]}" filterBy="#{requests.tensileElongationAtYield.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.tensileElongationAtYieldMD.value}" max="#{buyerView.strainAtYieldMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtYieldMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtYieldStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtYieldDecimal}" minFractionDigits="#{buyerView.strainAtYieldDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.tensileElongationAtYieldMD.value, buyerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.tensileElongationAtYieldMD)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Break" sortBy="#{requests.elongationAtBreak.value}" visible="#{buyerView.activeColumns1[21]}" filterBy="#{requests.elongationAtBreak.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.elongationAtBreak.value}" max="#{buyerView.strainAtBreakMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtBreakDecimal}" minFractionDigits="#{buyerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.elongationAtBreak.value, buyerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.elongationAtBreak)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break TD" sortBy="#{requests.elongationAtBreakTD.value}" visible="#{buyerView.activeColumns1[22]}" filterBy="#{requests.elongationAtBreakTD.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.elongationAtBreakTD.value}" max="#{buyerView.strainAtBreakMaxMDTD}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtBreakDecimal}" minFractionDigits="#{buyerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.elongationAtBreakTD.value, buyerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.elongationAtBreakTD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break MD" sortBy="#{requests.elongationAtBreakMD.value}" visible="#{buyerView.activeColumns1[23]}" filterBy="#{requests.elongationAtBreakMD.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.elongationAtBreakMD.value}" max="#{buyerView.strainAtBreakMaxMDTD}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.strainAtBreakMin}" styleClass="custom-filter" stepFactor="#{buyerView.strainAtBreakStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.strainAtBreakDecimal}" minFractionDigits="#{buyerView.strainAtBreakDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.elongationAtBreakMD.value, buyerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.elongationAtBreakMD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Color" sortBy="#{requests.color.name}" visible="#{buyerView.activeColumns1[24]}" filterBy="#{requests.color.name}" filterMatchMode="contains">
+                    <f:facet name="filter">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.color.name}" onchange="PF('requestsTable').filter()" styleClass="custom-filter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{buyerView.distinctColors}" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.color.name, 0)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="Pollution" sortBy="#{requests.pollution.value}" visible="#{buyerView.activeColumns1[25]}" filterBy="#{requests.pollution.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterLEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.pollution.value}" max="#{buyerView.pollutionMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.pollutionMin}" styleClass="custom-filter" stepFactor="#{buyerView.pollutionStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.pollutionDecimal}" minFractionDigits="#{buyerView.pollutionDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.pollution.value, buyerView.pollutionDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.pollution)}"/>
+
+                </p:column>
+
+                <p:column headerText="Recycling Content" sortBy="#{requests.recyclingContent.value}" visible="#{buyerView.activeColumns1[26]}" filterBy="#{requests.recyclingContent.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.recyclingContent.value}" max="#{buyerView.recyclingMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.recyclingMin}" styleClass="custom-filter" stepFactor="#{buyerView.recyclingStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.recyclingDecimal}" minFractionDigits="#{buyerView.recyclingDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.recyclingContent.value, buyerView.recyclingDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.recyclingContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Density" sortBy="#{requests.density.valueMin}" visible="#{buyerView.activeColumns1[27]}" filterBy="#{unitConverterService.convertUnit(requests.density, buyerView.user.config.densityPrefferedUnit)}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.densityMin}" max="#{buyerView.densityMax}" step="#{buyerView.densityStep}" decimal="#{buyerView.densityDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getDensity().getValueMin(),  buyerView.densityMax, buyerView.densityMin, buyerView.currentRequest.getDensity(), buyerView.densityStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getDensity().getValueMax(), buyerView.densityMin, buyerView.densityMax, buyerView.currentRequest.getDensity(), buyerView.densityStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getDensity().getValueMax(), buyerView.densityMax, buyerView.densityMin, buyerView.currentRequest.getDensity().getValueMin(), buyerView.currentRequest.getDensity(), buyerView.densityStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getDensity().getValueMin(),   buyerView.densityMin, buyerView.densityMax, buyerView.currentRequest.getDensity().getValueMax(), buyerView.currentRequest.getDensity(), buyerView.densityStep)}" value1="#{buyerView.currentRequest.density}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.density, buyerView.user.config.densityPrefferedUnit, buyerView.densityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.density, buyerView.user.config.densityPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Bulk Density" sortBy="#{requests.bulkDensity.valueMin}" visible="#{buyerView.activeColumns1[28]}" filterBy="#{unitConverterService.convertUnit(requests.bulkDensity, buyerView.user.config.bulkDensityPrefferedUnit)}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.adensityMin}" max="#{buyerView.adensityMax}" step="#{buyerView.adensityStep}" decimal="#{buyerView.adensityDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getBulkDensity().getValueMin(),  buyerView.adensityMax, buyerView.adensityMin, buyerView.currentRequest.getBulkDensity(), buyerView.adensityStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getBulkDensity().getValueMax(), buyerView.adensityMin, buyerView.adensityMax, buyerView.currentRequest.getBulkDensity(), buyerView.adensityStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getBulkDensity().getValueMax(), buyerView.adensityMax, buyerView.adensityMin, buyerView.currentRequest.getBulkDensity().getValueMin(), buyerView.currentRequest.getBulkDensity(), buyerView.adensityStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getBulkDensity().getValueMin(),   buyerView.adensityMin, buyerView.adensityMax, buyerView.currentRequest.getBulkDensity().getValueMax(), buyerView.currentRequest.getBulkDensity(), buyerView.adensityStep)}" value1="#{buyerView.currentRequest.bulkDensity}" >
+                        </cc:valueRange>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.bulkDensity, buyerView.user.config.bulkDensityPrefferedUnit, buyerView.adensityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.bulkDensity, buyerView.user.config.bulkDensityPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column id="izodColumn" headerText="Izod Impact Strength" visible="#{buyerView.activeColumns1[29]}" filterBy="#{requests.izodTensileStr.value}" sortBy="#{requests.izodTensileStr.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.izodTensileStr.value}" max="#{buyerView.izodMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.izodMin}" styleClass="custom-filter" stepFactor="#{buyerView.izodStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.izodDecimal}" minFractionDigits="#{buyerView.izodDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.currentIzodImpactStrCondition}" hideNoSelectionOption="true" onchange="#{buyerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('requestsTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.izodTensileStr, buyerView.user.config.izodImpactStrengthPrefferedUnit, buyerView.izodDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.izodTensileStr, buyerView.user.config.izodImpactStrengthPrefferedUnit)}"/>
+
+                </p:column>
+
+
+                <p:column id="hardnessColumn" headerText="Hardness" visible="#{buyerView.activeColumns1[30]}" filterBy="#{requests.hardnes}" sortBy="#{requests.hardnes.valueMin}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.hardnessMin}" max="#{buyerView.hardnessMax}" step="#{buyerView.hardnessStep}" decimal="#{buyerView.hardnessDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.hardnes.getValueMin(),  buyerView.hardnessMax, buyerView.hardnessMin, buyerView.currentRequest.hardnes, buyerView.hardnessStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.hardnes.getValueMax(), buyerView.hardnessMin, buyerView.hardnessMax, buyerView.currentRequest.hardnes, buyerView.hardnessStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.hardnes.getValueMax(), buyerView.hardnessMax, buyerView.hardnessMin, buyerView.currentRequest.hardnes.getValueMin(), buyerView.currentRequest.hardnes, buyerView.hardnessStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.hardnes.getValueMin(), buyerView.hardnessMin, buyerView.hardnessMax, buyerView.currentRequest.hardnes.getValueMax(), buyerView.currentRequest.hardnes, buyerView.hardnessStep)}" value1="#{buyerView.currentRequest.hardnes}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.currentHardness}" hideNoSelectionOption="true" onchange="#{buyerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctHardness}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('requestsTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.hardnes, null, buyerView.hardnessDecimal)} "/>
+                </p:column>
+
+                <p:column id="vicatsColumn" headerText="Vicat" visible="#{buyerView.activeColumns1[31]}" filterBy="#{requests.vicat.value}" sortBy="#{requests.vicat.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.vicat.value}" max="#{buyerView.vicatMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.vicatMin}" styleClass="custom-filter" stepFactor="#{buyerView.vicatStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.vicatDecimal}" minFractionDigits="#{buyerView.vicatDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+
+                    <f:facet name="footer">
+                        <p:selectOneMenu value="#{buyerView.currentRequest.currentVicatCondition}" hideNoSelectionOption="true" onchange="#{buyerView.reloadData(loginService.currentUser)}" converter="objectConverter">
+                            <f:selectItems value="#{propertiesSideInfos.distinctVicats}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this" oncomplete="PF('requestsTable').filter()"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.vicat, vicatPrefferedUnit, buyerView.vicatDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.vicat, buyerView.user.config.vicatPrefferedUnit)}"/>
+
+                </p:column>
+
+                <p:column headerText="HDT" sortBy="#{requests.hdt.value}" filterBy="#{unitConverterService.convertUnit(requests.hdt, buyerView.user.config.HDTPrefferedUnit)}" visible="#{buyerView.activeColumns1[32]}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.hdt.value}" max="#{buyerView.HDTMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.HDTMin}" styleClass="custom-filter" stepFactor="#{buyerView.HDTStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.HDTDecimal}" minFractionDigits="#{buyerView.HDTDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.hdt, buyerView.user.config.HDTPrefferedUnit, buyerView.HDTDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.hdt, buyerView.user.config.HDTPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Oit" sortBy="#{requests.oit.value}" filterBy="#{requests.oit.value}" visible="#{buyerView.activeColumns1[33]}" filterMatchMode="exact" filterFunction="#{buyerView.filterGEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.oit.value}" max="#{buyerView.OITMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.OITMin}" styleClass="custom-filter" stepFactor="#{buyerView.OITStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.OITDecimal}" minFractionDigits="#{buyerView.OITDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.oit.value, buyerView.OITDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.oit)}"/>
+                </p:column>
+
+                <p:column headerText="Mould Shrinkage" sortBy="#{requests.mouldShrinkage.valueMin}" visible="#{buyerView.activeColumns1[34]}" filterBy="#{requests.mouldShrinkage}" filterFunction="#{buyerView.filterByRange}">
+                    <f:facet name="filter">
+                        <cc:valueRange min="#{buyerView.mouldShrinkageMin}" max="#{buyerView.mouldShrinkageMax}" step="#{buyerView.mouldShrinkageStep}" decimal="#{buyerView.mouldShrinkageDecimal}" onComplete="PF('requestsTable').filter()" decreaseMinAction="#{buyerView.decreaseRange1(buyerView.currentRequest.getMouldShrinkage().getValueMin(),  buyerView.mouldShrinkageMax, buyerView.mouldShrinkageMin, buyerView.currentRequest.getMouldShrinkage(), buyerView.mouldShrinkageStep)}" increaseMaxAction="#{buyerView.increaseRange2(buyerView.currentRequest.getMouldShrinkage().getValueMax(), buyerView.mouldShrinkageMin, buyerView.mouldShrinkageMax, buyerView.currentRequest.getMouldShrinkage(), buyerView.mouldShrinkageStep)}" decreaseMaxAction="#{buyerView.decreaseRange2(buyerView.currentRequest.getMouldShrinkage().getValueMax(), buyerView.mouldShrinkageMax, buyerView.mouldShrinkageMin, buyerView.currentRequest.getMouldShrinkage().getValueMin(), buyerView.currentRequest.getMouldShrinkage(), buyerView.mouldShrinkageStep)}" increaseMinAction="#{buyerView.increaseRange1(buyerView.currentRequest.getMouldShrinkage().getValueMin(),   buyerView.mouldShrinkageMin, buyerView.mouldShrinkageMax, buyerView.currentRequest.getMouldShrinkage().getValueMax(), buyerView.currentRequest.getMouldShrinkage(), buyerView.mouldShrinkageStep)}" value1="#{buyerView.currentRequest.mouldShrinkage}" >
+                        </cc:valueRange>
+                    </f:facet>
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(requests.mouldShrinkage, null, buyerView.mouldShrinkageDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.mouldShrinkage)}"/>
+
+                </p:column>
+
+                <p:column headerText="Moisture Content" sortBy="#{requests.moistureContent.value}" visible="#{buyerView.activeColumns1[35]}" filterBy="#{requests.moistureContent.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterLEQ}">
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.moistureContent.value}" max="#{buyerView.moistMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.moistMin}" styleClass="custom-filter" stepFactor="#{buyerView.moistStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.moistDecimal}" minFractionDigits="#{buyerView.moistDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.moistureContent.value, buyerView.moistDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.moistureContent)}"/>
+                </p:column>
+
+                <p:column headerText="Ash Content" sortBy="#{requests.ashContent.value}" visible="#{buyerView.activeColumns1[36]}" filterBy="#{requests.ashContent.value}" filterMatchMode="exact" filterFunction="#{buyerView.filterLEQ}" >
+                    <f:facet name="filter">
+                        <p:spinner value="#{buyerView.currentRequest.ashContent.value}" max="#{buyerView.ashMax}" onkeyup="PF('requestsTable').filter()" onchange="PF('requestsTable').filter()" min="#{buyerView.ashMin}" styleClass="custom-filter" stepFactor="#{buyerView.ashStep}">
+                            <f:converter converterId="javax.faces.Double" />
+                            <f:convertNumber maxFractionDigits="#{buyerView.ashDecimal}" minFractionDigits="#{buyerView.ashDecimal}"/>
+                        </p:spinner>
+                    </f:facet>
+                    <h:outputText value="#{formatterService.formatOutput(requests.ashContent.value, buyerView.ashDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(requests.ashContent)}"/>
+                </p:column>
+
+                <p:column style="width:2rem;text-align: center" toggleable="false">
+                    <p:commandButton disabled="#{!buyerView.canHandleSelected(requests)}" update="editForm:requestsDetails" oncomplete="PF('requestssDialog').show()"
+                                     icon="pi pi-pencil" process="requestss" title="edit">
+                        <f:setPropertyActionListener value="#{requests}"
+                                                     target="#{buyerView.selectedRequest}"/>
+                    </p:commandButton>
+                </p:column>
+                <p:column style="width:2rem;text-align: center;padding-left: 0" toggleable="false">
+                    <p:commandButton disabled="#{!buyerView.canHandleSelected(requests)}" update="requestss" process="requestss" action="#{buyerView.deleterequests()}"
+                                     icon="pi pi-times-circle" title="delete">
+                        <p:confirm header="Confirmation" message="Do you want to delete this record?" icon="pi pi-info-circle"/>
+                        <f:setPropertyActionListener value="#{requests}"
+                                                     target="#{buyerView.selectedRequest}"/>
+                    </p:commandButton>
+                </p:column>
+                <p:column style="width:2rem;text-align: center;padding-left: 0" toggleable="false">
+                    <p:commandButton disabled="#{!buyerView.canHandleSelected(requests)}" update="requestss" process="requestss" action="#{buyerView.resolveRequest()}"
+                                     icon="pi pi-check" title="resolve">
+                        <p:confirm header="Confirmation" message="Do you want to resolve this record?" icon="pi pi-info-circle"/>
+                        <f:setPropertyActionListener value="#{requests}"
+                                                     target="#{buyerView.selectedRequest}"/>
+                    </p:commandButton>
+                </p:column>
+
+                <p:rowExpansion>
+                    <div class="requests">
+                        <p:growl id="msg2"/>
+                        <div class="requests-list-item">
+                            <div class="requests-list-detail">
+                                <h4 style="margin-top:0">
+                                    <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,requestss" oncomplete="PF('contextDialog').show()" value="Receive Contact per Mail" icon="pi pi-users">
+                                    </p:commandButton>
+                                    <p  style="text-align:left;">
+                                        Request Details: 
+                                        <span style="float:right;">
+                                            Show Unknown Properties
+                                            <p:toggleSwitch style="float:right;" value="#{buyerView.showUnknownProperties}">
+                                                <p:ajax update="propertiesPanel"/>
+                                            </p:toggleSwitch>
+                                        </span>
+                                    </p>
+                                </h4>
+                                <p:panelGrid id="propertiesPanel" columns="6" layout="grid">
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.context.targetMarket != null}" style="font-weight: bold;">Target Industry</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.context.targetMarket != null}" >#{formatterService.formatOutput(requests.context.targetMarket.name, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.context.targetProduct != null}" style="font-weight: bold;">Target Product Group</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.context.targetProduct != null}" >#{formatterService.formatOutput(requests.context.targetProduct.name, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.testedBy != null}" style="font-weight: bold;">Tested By</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.testedBy != null}" >#{formatterService.formatOutput(requests.testedBy, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.material.name != null}" style="font-weight: bold;">Polymer Type</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.material.name != null}">#{formatterService.formatOutput(requests.material.name, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.processTech.name != null}" style="font-weight: bold;">Process Technology</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.processTech.name != null}" >#{formatterService.formatOutput(requests.processTech.name, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.particleGeometry.name != null}" style="font-weight: bold;">Particle Geometry</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.particleGeometry.name != null}" >#{formatterService.formatOutput(requests.particleGeometry.name, 0)}</p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.meltFiltrationSize.value != null}" style="font-weight: bold;">Melt Filtration Size</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.meltFiltrationSize.value != null}" >#{formatterService.formatVariationWithConversion(requests.meltFiltrationSize, null, buyerView.MFIDecimal)} <em>#{formatterService.formatUnit(requests.meltFiltrationSize)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.modificationContent.valueMin != null}" style="font-weight: bold;">Modification Content</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.modificationContent.valueMin!= null}" >#{formatterService.formatVariationWithConversion(requests.modificationContent, null, buyerView.modificationDecimal)} <em>#{formatterService.formatUnit(requests.modificationContent)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.polymerModifications.name != null}" style="font-weight: bold;">Polymer Modifications</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.polymerModifications.name != null}" >#{formatterService.formatOutput(requests.polymerModifications.name, 0)}</p:column>
+
+                                    <p:column style="font-weight: bold;" rendered="#{(requests.material.name ne 'pvc')}" >MFI  (#{requests.currentMFICondition.toString()})</p:column>
+                                    <p:column style="font-weight: bold;" rendered="#{(requests.material.name eq 'pvc')}" >K Value</p:column>
+
+                                    <p:column rendered="#{(requests.material.name ne 'pvc')}" >#{formatterService.formatVariationWithConversion(requests.MFI, null, buyerView.MFIDecimal)} <em>#{formatterService.formatUnit(requests.MFI)}</em></p:column>
+                                    <p:column rendered="#{(requests.material.name eq 'pvc')}" >#{formatterService.formatVariationWithConversion(requests.KValue, null, buyerView.kvalueDecimal)}</p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.charpyTensileStr.value != null}" style="font-weight: bold;">Charpy Impact Strength (#{requests.currentCharpyImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.charpyTensileStr.value != null) and (formatterService.formatOutput(requests.charpyTensileStr.variation, buyerView.charpyDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.charpyTensileStr.value, buyerView.user.config.charpyImpactStrengthPrefferedUnit, requests.charpyTensileStr.unit), buyerView.charpyDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(requests.charpyTensileStr.variation, buyerView.user.config.charpyImpactStrengthPrefferedUnit, requests.charpyTensileStr.unit), buyerView.charpyDecimal)} <em>#{formatterService.formatUnit(requests.charpyTensileStr, buyerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.charpyTensileStr.value != null) and (formatterService.formatOutput(requests.charpyTensileStr.variation, buyerView.charpyDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.charpyTensileStr.value, buyerView.user.config.charpyImpactStrengthPrefferedUnit, requests.charpyTensileStr.unit), buyerView.charpyDecimal)} <em>#{formatterService.formatUnit(requests.charpyTensileStr, buyerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulus.valueMin != null}" style="font-weight: bold;">E-Modulus</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.EModulus, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} <em>#{formatterService.formatUnit(requests.EModulus, buyerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulusTD.valueMin != null}" style="font-weight: bold;">E-Modulus TD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulusTD.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.EModulusTD, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} <em>#{formatterService.formatUnit(requests.EModulusTD, buyerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulusMD.valueMin != null}" style="font-weight: bold;">E-Modulus MD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.EModulusMD.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.EModulusMD, buyerView.user.config.EModulusPrefferedUnit, buyerView.EModulusDecimal)} <em>#{formatterService.formatUnit(requests.EModulusMD, buyerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.flexuralModulus.valueMin != null}" style="font-weight: bold;">Flexural Modulus</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.flexuralModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.flexuralModulus, buyerView.user.config.flexuralModulusPrefferdUnit, buyerView.flexuralModulusDecimal)} <em>#{formatterService.formatUnit(requests.flexuralModulus, buyerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYield.value != null}" style="font-weight: bold;">Stength at Yield</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYield.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.tensileStrenghtAtYield, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit), buyerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileStrenghtAtYield, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYieldTD.value != null}" style="font-weight: bold;">Stength at Yield TD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYieldTD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.tensileStrenghtAtYieldTD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit), buyerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileStrenghtAtYieldTD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYieldMD.value != null}" style="font-weight: bold;">Stength at Yield MD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileStrenghtAtYieldMD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.tensileStrenghtAtYieldMD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit), buyerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileStrenghtAtYieldMD, buyerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYield.value != null}" style="font-weight: bold;">Strain at Yield</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYield.value != null}" >#{formatterService.formatOutput(requests.tensileElongationAtYield.value, buyerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileElongationAtYield)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYieldTD.value != null}" style="font-weight: bold;">Strain at Yield TD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYieldTD.value != null}" >#{formatterService.formatOutput(requests.tensileElongationAtYieldTD.value, buyerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileElongationAtYieldTD)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYieldMD.value != null}" style="font-weight: bold;">Strain at Yield MD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.tensileElongationAtYieldMD.value != null}" >#{formatterService.formatOutput(requests.tensileElongationAtYieldMD.value, buyerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(requests.tensileElongationAtYieldMD)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreak.value != null}" style="font-weight: bold;">Strain at Break</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreak.value != null}" >#{formatterService.formatOutput(requests.elongationAtBreak.value, buyerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(requests.elongationAtBreak)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreakTD.value != null}" style="font-weight: bold;">Strain at Break TD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreakTD.value != null}" >#{formatterService.formatOutput(requests.elongationAtBreakTD.value, buyerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(requests.elongationAtBreakTD)}</em></p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreakMD.value != null}" style="font-weight: bold;">Strain at Break MD</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.elongationAtBreakMD.value != null}" >#{formatterService.formatOutput(requests.elongationAtBreakMD.value, buyerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(requests.elongationAtBreakMD)}</em></p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.recyclingContent.value != null}" style="font-weight: bold;">Recycling Content</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.recyclingContent.value != null}" >#{formatterService.formatOutput(requests.recyclingContent.value, buyerView.recyclingDecimal)} <em>#{formatterService.formatUnit(requests.recyclingContent)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.density.valueMin != null}" style="font-weight: bold;">Density</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.density.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.density, buyerView.user.config.densityPrefferedUnit, buyerView.recyclingDecimal)} <em>#{formatterService.formatUnit(requests.density, buyerView.user.config.densityPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.bulkDensity.valueMin != null}" style="font-weight: bold;">Bulk Density</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.bulkDensity.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.bulkDensity, buyerView.user.config.bulkDensityPrefferedUnit, buyerView.adensityDecimal)} <em>#{formatterService.formatUnit(requests.bulkDensity, buyerView.user.config.bulkDensityPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.izodTensileStr.value != null}" style="font-weight: bold;">Izod Impact Strength (#{requests.currentIzodImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.izodTensileStr.value != null) and (formatterService.formatOutput(requests.izodTensileStr.variation, buyerView.izodDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.izodTensileStr.value, buyerView.user.config.izodImpactStrengthPrefferedUnit, requests.izodTensileStr.unit), buyerView.izodDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(requests.izodTensileStr.variation, buyerView.user.config.izodImpactStrengthPrefferedUnit, requests.izodTensileStr.unit), buyerView.izodDecimal)} <em>#{formatterService.formatUnit(requests.izodTensileStr, buyerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.izodTensileStr.value != null) and (formatterService.formatOutput(requests.izodTensileStr.variation, buyerView.izodDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.izodTensileStr.value, buyerView.user.config.izodImpactStrengthPrefferedUnit, requests.izodTensileStr.unit), buyerView.izodDecimal)} <em>#{formatterService.formatUnit(requests.izodTensileStr, buyerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.hardnes.valueMin != null}" style="font-weight: bold;">Hardness (#{requests.currentHardness.toString()})</p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.hardnes.valueMin != null)}" >#{formatterService.formatVariationWithConversion(requests.hardnes.valueMin, null, buyerView.hardnessDecimal)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.vicat.value != null}" style="font-weight: bold;">Vicat (#{requests.currentVicatCondition.toString()})</p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.vicat.value != null) and (formatterService.formatOutput(requests.vicat.variation, buyerView.vicatDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.vicat.value, buyerView.user.config.vicatPrefferedUnit, requests.vicat.unit), buyerView.vicatDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(requests.vicat.variation, buyerView.user.config.vicatPrefferedUnit, requests.vicat.unit), buyerView.vicatDecimal)} <em>#{formatterService.formatUnit(requests.vicat, buyerView.user.config.vicatPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(buyerView.showUnknownProperties || requests.vicat.value != null) and (formatterService.formatOutput(requests.vicat.variation, buyerView.vicatDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.vicat.value, buyerView.user.config.vicatPrefferedUnit, requests.vicat.unit), buyerView.vicatDecimal)}  <em>#{formatterService.formatUnit(requests.vicat, buyerView.user.config.vicatPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.hdt.value != null}" style="font-weight: bold;">HDT</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.hdt.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(requests.hdt, buyerView.user.config.HDTPrefferedUnit), buyerView.HDTDecimal)} <em>#{formatterService.formatUnit(requests.hdt, buyerView.user.config.HDTPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.oit.value != null}" style="font-weight: bold;">OIT</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.oit.value != null}" >#{formatterService.formatOutput(requests.oit.value, buyerView.OITDecimal)} <em>#{formatterService.formatUnit(requests.oit)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.moistureContent.value != null}" style="font-weight: bold;">Moisture Content</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.moistureContent.value != null}" >#{formatterService.formatOutput(requests.moistureContent.value, buyerView.moistDecimal)} <em>#{formatterService.formatUnit(requests.moistureContent)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.ashContent.value != null}" style="font-weight: bold;">Ash Content</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.ashContent.value != null}" >#{formatterService.formatOutput(requests.ashContent.value, buyerView.ashDecimal)} <em>#{formatterService.formatUnit(requests.ashContent)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.color.name != null}" style="font-weight: bold;">Color</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.color.name != null}" >#{formatterService.formatOutput(requests.color.name, 0)}</p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.pollution.value != null}" style="font-weight: bold;">Pollution</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.pollution.value != null}" >#{formatterService.formatOutput(requests.pollution.value, buyerView.pollutionDecimal)} <em>#{formatterService.formatUnit(requests.pollution)}</em></p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.mouldShrinkage.valueMin != null}" style="font-weight: bold;">Mould Shrinkage</p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || requests.mouldShrinkage.valueMin != null}" >#{formatterService.formatVariationWithConversion(requests.mouldShrinkage, null, buyerView.mouldShrinkageDecimal)} <em>#{formatterService.formatUnit(requests.mouldShrinkage)}</em></p:column>
+
+
+                                </p:panelGrid>
+                                <div class="ui-g" style="padding-left: 6px">
+                                    <div class="ui-g-3">
+                                        <p style="display: inline;font-weight: bold;">Comments</p>
+                                    </div>
+                                    <div class="ui-g-12">
+                                        <p:inputTextarea readonly="true" value="#{requests.comments}" autoResize="false" style="height: 8rem;width: 100% !important;max-height: 8rem">
+                                        </p:inputTextarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </p:rowExpansion>
+
+            </p:dataTable>
+
+
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            </p:confirmDialog>
+
+        </h:form>
+
+        <p:dialog id="editDialogR" header="Requests Edit" widgetVar="requestssDialog" modal="true" resizable="false" height="70%" width="60%" closable="false" draggable="false">
+            <h:form id="editForm" >
+                <h4 style="float: top">
+                    <p:outputLabel class="toggleswitch-box" value="Show Unknown Properties" />
+                    <p:toggleSwitch style="margin-top: 7px;position: absolute;left: 230px;top: 10px;" value="#{buyerView.showUnknownProperties}">
+                        <p:ajax update="requestsDetails" process="@this"/>
+                    </p:toggleSwitch>
+                </h4>
+                <p:outputPanel id="requestsDetails" style="float:center;overflow-y: auto;height: 72vh;" >
+                    <p:column rendered="#{not empty buyerView.selectedRequest}">
+                        <div class="product">
+                            <div class="product-grid-item border-0">
+                                <p:panelGrid  style="float:center" columns="1" layout="grid" id="propertiesPanel">
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.targetMarket != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Target Market</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.context.targetMarket}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctTargetMarkets}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.targetProduct != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Target Product</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.context.targetProduct != null}" value="#{buyerView.selectedRequest.context.targetProduct}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctTargetProducts}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.testedBy != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Tested By</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:inputText style="width: 100% !important;" disabled="#{not loginService.currentUser.adminTag}" value="#{buyerView.selectedRequest.testedBy}">
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:inputText>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.material.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Polymer Type</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.material}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctMaterials}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.particleGeometry.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Particle Geometry</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.particleGeometry}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctParticleGeo}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.processTech.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Process Technology</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.processTech}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctProcessTechs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.meltFiltrationSize.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Melt Filtration Size</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.meltFiltrationSize.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.metersUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.meltFiltrationSize.value}" min="#{buyerView.meltFiltrationMin}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{buyerView.meltFiltrationStep}" max="#{buyerView.meltFiltrationMax}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.modificationContent.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Modification Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.modificationContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, modificationContentMinEditor,modificationContentMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="modificationContentMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.modificationContent.valueMin}" min="#{buyerView.modificationMin}" styleClass="custom-filter"  max="#{buyerView.modificationMax}" stepFactor="#{buyerView.modificationStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,modificationContentMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="modificationContentMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.modificationContent.variation}" min="#{buyerView.modificationMin}" styleClass="custom-filter" max="#{buyerView.modificationMax}" stepFactor="#{buyerView.modificationStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,modificationContentMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.polymerModifications.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Polymer Modification</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.polymerModifications}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctPolyMods}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{(buyerView.selectedRequest.material.name ne 'pvc')}" >
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">MFI</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.currentMFICondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctMFIWeights}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mfiMinEditor,mfiMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.MFI.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.MFIUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mfiMinEditor,mfiMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="mfiMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.MFI.valueMin}" min="#{buyerView.MFIMin}" styleClass="custom-filter"  max="#{buyerView.MFIMax}" stepFactor="#{buyerView.MFIStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,mfiMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="mfiMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.MFI.variation}" min="#{buyerView.MFIMin}" styleClass="custom-filter" max="#{buyerView.MFIMax}" stepFactor="#{buyerView.MFIStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,mfiMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{(buyerView.selectedRequest.material.name eq 'pvc')}" >
+                                        <div class="ui-g">
+
+                                            <div class="ui-g">
+                                                <div class="ui-g-3">
+                                                    <p style="display: inline">K Value</p>
+                                                </div>
+                                                <div class="ui-g-3" style="padding: 0">
+
+                                                </div>
+                                                <div class="ui-g-2" style="padding: 0">
+                                                    <p:spinner id="kvalueMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.KValue.valueMin}" min="#{buyerView.kvalueMin}" styleClass="custom-filter"  max="#{buyerView.kvalueMax}" stepFactor="#{buyerView.kvalueStep}">
+                                                        <f:converter converterId="javax.faces.Double" />
+                                                        <p:ajax event="valueChange" process="@this" update="@this,kvalueMaxEditor"/>
+                                                    </p:spinner>
+                                                </div>
+                                                <div class="ui-g-2" style="padding: 0">
+                                                    <div class="ui-g" style="padding: 0">
+                                                        <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                            <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                        </div>
+                                                        <div class="ui-g-11" style="padding: 0">
+                                                            <p:spinner id="kvalueMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.KValue.variation}" min="#{buyerView.kvalueMin}" styleClass="custom-filter" max="#{buyerView.kvalueMax}" stepFactor="#{buyerView.kvalueStep}">
+                                                                <f:converter converterId="javax.faces.Double" />
+                                                                <p:ajax event="valueChange" process="@this" update="@this,kvalueMinEditor"/>
+                                                            </p:spinner>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.charpyTensileStr.value != null}" >
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Charpy Impact Strength</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.currentCharpyImpactStrCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, charpyMinEditor,charpyMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.charpyTensileStr.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.impactSquareUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, charpyMinEditor,charpyMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="charpyMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.charpyTensileStr.value}" min="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(0.1, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" styleClass="custom-filter">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,charpyMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="charpyMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.charpyTensileStr.variation}" min="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(0.1, buyerView.selectedRequest.charpyTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(0))}" styleClass="custom-filter">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,charpyMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.EModulus.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.EModulus.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMinEditor,EModulusMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulus.valueMin}" min="#{buyerView.EModulusMin}" styleClass="custom-filter"  max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulus.variation}" min="#{buyerView.EModulusMin}" styleClass="custom-filter" max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.EModulusTD.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.EModulusTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMinTDEditor,EModulusTDMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMinTDEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulusTD.valueMin}" min="#{buyerView.EModulusMin}" styleClass="custom-filter"  max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusTDMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusTDMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulusTD.variation}" min="#{buyerView.EModulusMin}" styleClass="custom-filter" max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMinTDEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.EModulusMD.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">E Modulus MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.EModulusMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, EModulusMDMinEditor,EModulusMDMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="EModulusMDMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulusMD.valueMin}" min="#{buyerView.EModulusMin}" styleClass="custom-filter"  max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,EModulusMDMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="EModulusMDMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.EModulusMD.variation}" min="#{buyerView.EModulusMin}" styleClass="custom-filter" max="#{buyerView.EModulusMax}" stepFactor="#{buyerView.EModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,EModulusMDMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.flexuralModulus.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Flexural Modulus</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.flexuralModulus.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, flexuralModulusMinEditor,flexuralModulusMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="flexuralModulusMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.flexuralModulus.valueMin}" min="#{buyerView.flexuralModulusMin}" styleClass="custom-filter"  max="#{buyerView.flexuralModulusMax}" stepFactor="#{buyerView.flexuralModulusStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,flexuralModulusMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="flexuralModulusMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.flexuralModulus.variation}" min="#{buyerView.flexuralModulusMin}" styleClass="custom-filter" max="#{buyerView.flexuralModulusMax}" stepFactor="#{buyerView.flexuralModulusStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,flexuralModulusMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileStrenghtAtYield.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileStrenghtAtYield.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileStrenghtAtYield.value}" min="#{unitConverterService.convertUnit(5, buyerView.selectedRequest.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, buyerView.selectedRequest.tensileStrenghtAtYield.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileStrenghtAtYieldTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileStrenghtAtYieldTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileStrenghtAtYieldTD.value}" min="#{unitConverterService.convertUnit(5, buyerView.selectedRequest.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, buyerView.selectedRequest.tensileStrenghtAtYieldTD.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileStrenghtAtYieldMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strength at Yield MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileStrenghtAtYieldMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.modulusUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileStrenghtAtYieldMD.value}" min="#{unitConverterService.convertUnit(5, buyerView.selectedRequest.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" stepFactor="#{unitConverterService.convertUnit(0.5, buyerView.selectedRequest.tensileStrenghtAtYieldMD.unit, propertiesSideInfos.modulusUnits.get(1))}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileElongationAtYield.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileElongationAtYield.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileElongationAtYield.value}" styleClass="custom-filter" style="width: 100% !important;" min="#{buyerView.strainAtYieldMin}" max="#{buyerView.strainAtYieldMax}" stepFactor="#{buyerView.strainAtYieldStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileElongationAtYieldTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileElongationAtYieldTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileElongationAtYieldTD.value}" min="#{buyerView.strainAtYieldMin}" max="#{buyerView.strainAtYieldMax}" stepFactor="#{buyerView.strainAtYieldStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.tensileElongationAtYieldMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Yield MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.tensileElongationAtYieldMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.tensileElongationAtYieldMD.value}" min="#{buyerView.strainAtYieldMin}" max="#{buyerView.strainAtYieldMax}" stepFactor="#{buyerView.strainAtYieldStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.elongationAtBreak.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.elongationAtBreak.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.elongationAtBreak.value}" min="#{buyerView.strainAtBreakMin}" max="#{buyerView.strainAtBreakMax}" stepFactor="#{buyerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.elongationAtBreakTD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break TD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.elongationAtBreakTD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.elongationAtBreakTD.value}" min="#{buyerView.strainAtBreakMin}" max="#{buyerView.strainAtBreakMaxMDTD}" stepFactor="#{buyerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.elongationAtBreakMD.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Strain at Break MD</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.elongationAtBreakMD.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.elongationAtBreakMD.value}" min="#{buyerView.strainAtBreakMin}" max="#{buyerView.strainAtBreakMaxMDTD}" stepFactor="#{buyerView.strainAtBreakStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.color.name != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Color</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.color}" converter="objectConverter">
+                                                    <f:selectItem itemLabel="Unknown" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{buyerView.distinctColors}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.pollution.value != null}" style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Pollution Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.pollution.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.pollution.value}" min="#{buyerView.pollutionMin}" max="#{buyerView.pollutionMax}" stepFactor="#{buyerView.pollutionStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.mouldShrinkage.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Mould Shrinkage</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.mouldShrinkage.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, mouldShrinkageMinEditor,mouldShrinkageMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="mouldShrinkageMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.mouldShrinkage.valueMin}" min="#{buyerView.mouldShrinkageMin}" styleClass="custom-filter"  max="#{buyerView.mouldShrinkageMax}" stepFactor="#{buyerView.mouldShrinkageStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,mouldShrinkageMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="mouldShrinkageMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.mouldShrinkage.variation}" min="#{buyerView.mouldShrinkageMin}" styleClass="custom-filter" max="#{buyerView.mouldShrinkageMax}" stepFactor="#{buyerView.mouldShrinkageStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,mouldShrinkageMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.recyclingContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Recycling Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.recyclingContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner id="editRecyclecContent" value="#{buyerView.selectedRequest.recyclingContent.value}" min="#{buyerView.recyclingMin}" max="#{buyerView.recyclingMax}" stepFactor="#{buyerView.recyclingStep}" styleClass="custom-filter" style="width: 100% !important;">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.density.valueMin != null}" style="font-weight: bold;margin-top: 7pt;"> 
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Density</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.density.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.densityUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, densityMinEditor,densityMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="densityMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.density.valueMin}" min="#{buyerView.densityMin}" styleClass="custom-filter"  max="#{buyerView.densityMax}" stepFactor="#{buyerView.densityStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,densityMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="densityMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.density.variation}" min="#{buyerView.densityMin}" styleClass="custom-filter" max="#{buyerView.densityMax}" stepFactor="#{buyerView.densityStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,densityMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.bulkDensity.valueMin != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Bulk Density</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.bulkDensity.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.densityUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, adensityMinEditor,adensityMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="adensityMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.bulkDensity.valueMin}" min="#{buyerView.adensityMin}" styleClass="custom-filter"  max="#{buyerView.adensityMax}" stepFactor="#{buyerView.adensityStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,adensityMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="adensityMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.bulkDensity.variation}" min="#{buyerView.adensityMin}" styleClass="custom-filter" max="#{buyerView.adensityMax}" stepFactor="#{buyerView.adensityStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,adensityMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.izodTensileStr.value != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Izod Impact Strength</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.currentIzodImpactStrCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctImpactStrs}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, izodMinEditor,izodMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.izodTensileStr.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.impactNoneSquareUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, izodMinEditor,izodMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="izodMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.izodTensileStr.value}" min="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" max="#{unitConverterService.convertUnit(500, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" styleClass="custom-filter"  stepFactor="#{unitConverterService.convertUnit(5, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,izodMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="izodMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.izodTensileStr.variation}" min="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" max="#{unitConverterService.convertUnit(500, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}" styleClass="custom-filter" stepFactor="#{unitConverterService.convertUnit(5, buyerView.selectedRequest.izodTensileStr.unit, propertiesSideInfos.impactSquareUnits.get(1))}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,izodMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.hardnes.valueMin != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Hardness</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.currentHardness}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctHardness}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, hardnessMinEditor,hardnessMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="hardnessMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.hardnes.valueMin}" min="#{buyerView.hardnessMin}" styleClass="custom-filter"  max="#{buyerView.hardnessMax}" stepFactor="#{buyerView.hardnessStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,hardnessMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="hardnessMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.hardnes.variation}" min="#{buyerView.hardnessMin}" max="#{buyerView.hardnessMax}" styleClass="custom-filter" stepFactor="#{buyerView.hardnessStep}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,hardnessMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;" rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.vicat.value != null}">
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Vicat</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+                                                <p:selectOneMenu  value="#{buyerView.selectedRequest.currentVicatCondition}" hideNoSelectionOption="true" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.distinctVicats}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, vicatMinEditor,vicatMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.vicat.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.temperatureUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this, vicatMinEditor,vicatMaxEditor"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:spinner id="vicatMinEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.vicat.value}" min="#{unitConverterService.convertUnit(20, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter"  max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" stepFactor="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this,vicatMaxEditor"/>
+                                                </p:spinner>
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <div class="ui-g" style="padding: 0">
+                                                    <div class="ui-g-1" style="padding: 0;padding-top: 4pt;">
+                                                        <p style="text-align:center; display: inline; font-size: 15pt"> ± </p>
+                                                    </div>
+                                                    <div class="ui-g-11" style="padding: 0">
+                                                        <p:spinner id="vicatMaxEditor" style="width: 100% !important;" value="#{buyerView.selectedRequest.vicat.variation}" min="#{unitConverterService.convertUnit(20, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter" stepFactor="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                            <f:converter converterId="javax.faces.Double" />
+                                                            <p:ajax event="valueChange" process="@this" update="@this,vicatMinEditor"/>
+                                                        </p:spinner>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.hdt.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">HDT</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.hdt.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.temperatureUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.hdt.value}" min="#{unitConverterService.convertUnit(20, buyerView.selectedRequest.hdt.unit, propertiesSideInfos.temperatureUnits.get(0))}" max="#{unitConverterService.convertUnit(200, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{unitConverterService.convertUnit(1, buyerView.selectedRequest.vicat.unit, propertiesSideInfos.temperatureUnits.get(0))}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.oit.value != null}" style="font-weight: bold;margin-top: 7pt;"> 
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">OIT</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.oit.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.timeUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.oit.value}" min="#{buyerView.OITMin}" max="#{buyerView.OITMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{buyerView.OITStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.moistureContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Moisture Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.moistureContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.moistureContent.value}" min="#{buyerView.moistMin}" max="#{buyerView.moistMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{buyerView.moistStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+                                    <p:column rendered="#{buyerView.showUnknownProperties || buyerView.selectedRequest.ashContent.value != null}" style="font-weight: bold;margin-top: 7pt;">
+                                        <div class="ui-g">
+
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Ash Content</p>
+                                            </div>
+                                            <div class="ui-g-3" style="padding: 0">
+
+                                            </div>
+                                            <div class="ui-g-2" style="padding: 0">
+                                                <p:selectOneMenu value="#{buyerView.selectedRequest.ashContent.unit}" converter="objectConverter" style="height: 37px">
+                                                    <f:selectItems value="#{propertiesSideInfos.percentUnits}" />
+                                                    <p:ajax event="itemSelect" process="@this" update="@this"/>
+                                                </p:selectOneMenu>
+                                            </div>
+                                            <div class="ui-g-4" style="padding: 0">
+                                                <p:spinner value="#{buyerView.selectedRequest.ashContent.value}" min="#{buyerView.ashMin}" max="#{buyerView.ashMax}" styleClass="custom-filter" style="width: 100% !important;" stepFactor="#{buyerView.ashStep}">
+                                                    <f:converter converterId="javax.faces.Double" />
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:spinner>
+                                            </div>
+                                        </div>
+                                    </p:column>
+
+
+
+
+
+                                    <p:column style="font-weight: bold;margin-top: 7pt;">
+
+                                        <div class="ui-g">
+                                            <div class="ui-g-3">
+                                                <p style="display: inline">Comments</p>
+                                            </div>
+
+
+                                            <div class="ui-g-12" style="padding: 0">
+                                                <p:inputTextarea value="#{buyerView.selectedRequest.comments}" style="height: 150rem;width: 100% !important;">
+                                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                                </p:inputTextarea>
+                                            </div>
+                                        </div>
+                                    </p:column>
+                                </p:panelGrid>
+
+                            </div>
+                        </div>
+                    </p:column>
+
+                </p:outputPanel>
+                <p:commandButton class="commandButtonStyle" update="propertiesPanel,providerViewB:requestss" process="@this"  action="#{buyerView.updateInstance()}" style="margin-right: 5px" oncomplete="PF('requestssDialog').hide()" value="Save">
+                </p:commandButton>
+                <p:commandButton class="commandButtonStyle" value="Discard" process="@this" update="requestsDetails,propertiesPanel,providerViewB" oncomplete="PF('requestssDialog').hide()"
+                                 action="#{buyerView.resetForm()}"/>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="uploadDialog" header="Upload Requests Data File" widgetVar="uploadDialog" modal="true" resizable="false" height="30%" width="50%" closable="false">
+            <h:form id="uploadForm" >
+
+                <p:fileUpload listener="#{buyerView.handleFileUpload}" mode="advanced" dragDropSupport="false"
+                              update="messages" sizeLimit="100000" allowTypes="/(\.|\/)(csv|xls?x|txt)$/"
+                              accept=".csv,.xls,.xlsx,.txt"
+                              onupload="return confirm('Are you sure?')"/>
+
+                <p:growl id="messages" showDetail="true"/>
+                <p:commandButton class="commandButtonStyle" value="Close" process="@this" update="providerViewB:requestss" oncomplete="PF('uploadDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="contextDialog" header="Provide the context of your search" widgetVar="contextDialog" modal="true" resizable="false" height="30%" width="50%" closable="true">
+            <h:form id="contextForm" >
+                <p:outputLabel for="@next" value="What is your industrial context?" />
+                <p:selectOneMenu value="#{buyerView.contactTargetIndustry}" styleClass="custom-filter">
+                    <f:selectItem itemLabel="-- please select one --" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{buyerView.distinctTargetMarkets}" />
+                    <p:ajax event="itemSelect" update="@this,contextForm" process="@this,contextForm"/>
+                </p:selectOneMenu>
+
+                <p:selectOneMenu value="#{buyerView.contactTargetProduct}" styleClass="custom-filter">
+                    <f:selectItem itemLabel="-- please select one --" itemValue="#{null}" noSelectionOption="true"/>
+                    <f:selectItems value="#{buyerView.distinctTargetProducts}" />
+                    <p:ajax event="itemSelect" update="@this,contextForm" process="@this,contextForm"/>
+                </p:selectOneMenu>
+                <p:card>
+                    <p:outputLabel value="By pressing submit you accept that your email address will be send to the to be contacted company. When and how they respond is not something in our responsibility." />
+                </p:card>
+                <p:growl id="messages" showDetail="true"/>
+                <p:commandButton id="submitCOntext" class="commandButtonStyle" value="Submit" disabled="#{buyerView.checkForEnableContextSubmit()}" process="@this,@form" update="@form" action="#{buyerView.getContact(loginService.currentUser, buyerView.selectedRequest)}" oncomplete="PF('contextDialog').hide()"/>
+                <p:commandButton class="commandButtonStyle" value="Discard" action="#{buyerView.resetForm('contextForm')}" process="@this,@form" update="@form" oncomplete="PF('contextDialog').hide()"/>
+            </h:form>
+        </p:dialog>
+
+    </f:view>
+    <ui:include src="/footer.xhtml" />
+</html>

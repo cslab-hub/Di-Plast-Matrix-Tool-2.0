@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+        <h:head>
+            <style type="text/css">
+                .centered {
+                    text-align: center;
+                }
+            </style>
+
+        </h:head>
+
+        <h:body style="background-color:#fafafa;">
+            <ui:include src="/tabs.xhtml" />
+            <p:card class="centered" style="width: 60rem; margin: 0 auto; align-content: center;text-align:center">
+                <h:form>
+                    <h2 style="color:#003399">Welcome #{loginService.currentUser.username} to the Matrix-Tool of the Di-Plast Project</h2>
+                    <!--<h:commandLink action="" value="Logout"></h:commandLink> -->
+                    <br/><!-- comment -->
+                    <h3 style="color:#003399">What is the Matrix Tool</h3>
+                    <p>One of the hindrances of using recyclate, according to the results of the Di-Plast survey and expert interviews, is the challenge in finding suitable recyclate grades for specific products. The correlation between product/process requirements is difficult to make, and in most cases field studies need to be carried out in order to validate the material selection. If converters would have a database where this aforementioned correlation is illustrated, it would be less complicated to find suitable recyclate grades. Furthermore, recompounders and material traders could use this tool in order to sell their material more efficiently.</p>
+                    <iframe width="570" height="322" src="https://player.vimeo.com/video/670138203"></iframe>
+
+                    <h3 style="color:#003399">Getting Started</h3>
+                    <p>For a guideline on how to use the tool we refer to <a href="https://di-plast.sis.cs.uos.de/attach/Matrix/matrix-guidelines.pdf">guidelines.pdf</a>.</p>
+                    <p>    For more information about the project and other tools visit the <a href="https://di-plast.sis.cs.uos.de/Wiki.jsp?page=Main">Di-Plast Knowledge-Hub</a></p>
+                    <h3 style="color:#003399">What is the Di-Plast Project</h3>
+                    <p>Di-Plast develops and implements digital tools to increase information transparency in the value chain and to support converters in purchasing and processing rPM. These tools will be implemented, demonstrated and tested in four pilots supporting companies from the plastics value chain. These companies are directly involved in conducting the pilots forming a co-creation process to make the tools fit for their applications. To find out more take a look at: <a href="https://www.nweurope.eu/projects/project-search/di-plast-digital-circular-economy-for-the-plastics-industry/">Di-Plast Project</a> </p>
+                    <h3 style="color:#003399">Funded by</h3>
+                    <p>The Matrix tool is funded by the Interreg North-West Europe program (Interreg NWE), project Di-Plast - Digital Circular Economy for the Plastics Industry (<a href="https://www.nweurope.eu/projects/project-search/di-plast-digital-circular-economy-for-the-plastics-industry/">NWE729</a>). For more information and other tools visit the <a href="https://di-plast.sis.cs.uos.de/Wiki.jsp?page=Main">Di-Plast Knowledge-Hub</a></p>
+                    <p:link href="https://www.nweurope.eu/projects/project-search/di-plast-digital-circular-economy-for-the-plastics-industry/" style="align-self: center; margin: 0; padding: 0">
+                        <p:graphicImage name="figures/di-plast-logo.png" style="height: 100px; margin: auto; padding: 0" />
+                    </p:link>
+                </h:form>
+            </p:card>
+        </h:body>
+    </f:view>
+    <ui:include src="/footer.xhtml" />
+</html>

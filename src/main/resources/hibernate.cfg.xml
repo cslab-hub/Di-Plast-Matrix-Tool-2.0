@@ -1,0 +1,48 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:mem:matrix</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <property name="dialect">org.hibernate.dialect.HSQLDialect</property>
+        <property name="hbm2ddl.auto">create-drop</property>
+        
+        <!-- JDBC connection pool settings ... using built-in test pool 
+        <property name="connection.pool_size">5</property>-->
+        <!-- Select our SQL dialect -->
+        <!-- <property name="dialect">org.hibernate.dialect.MySQL5Dialect</property>-->
+        
+        
+        <!--  Echo the SQL to stdout -->
+        <property name="show_sql">false</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!--<property name="org.hibernate.flushMode">COMMIT</property>-->
+        <mapping class="com.uos.matrix.entities.RecycledEntity" />
+        <mapping class="com.uos.matrix.entities.RequestEntity" />
+        <mapping class="com.uos.matrix.entities.ProcessTech" />
+        <mapping class="com.uos.matrix.entities.Material" />
+        <mapping class="com.uos.matrix.entities.Color" />
+        <mapping class="com.uos.matrix.entities.ParticleGeo" />
+        <mapping class="com.uos.matrix.entities.PolymerModification" />
+        <mapping class="com.uos.matrix.entities.TargetMarket" />
+        <mapping class="com.uos.matrix.entities.TargetProduct" />
+        <mapping class="com.uos.matrix.entities.UserEntity" />
+        <mapping class="com.uos.matrix.entities.ConfigEntity" />
+        <mapping class="com.uos.matrix.entities.ValidationRequestEntity" />
+        <mapping class="com.uos.matrix.entities.RequestedCombi" />
+    </session-factory>
+</hibernate-configuration>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:my="http://xmlns.domain.my/jsf/component"
+      >
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8" locale="en-US">
+        <h:head>
+            <style type="text/css">
+                .ui-filter-column .ui-column-customfilter .custom-filter {
+                    width: 100%;
+                    box-sizing: border-box;
+                    margin-bottom: 3px;
+                }
+                .ui-sortable-column-icon {
+                    float: top !important;
+                    position: relative !important;
+                }
+                .ui-datatable-hor-scroll .ui-datatable-tablewrapper,.scrolling-div .ui-datatable-tablewrapper{
+                    overflow: auto;
+                    width: 100%;
+                    padding-bottom: 5px;
+                }
+                th {
+                    vertical-align: bottom;
+                }
+                .ui-column-filter {
+                    vertical-align: bottom;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    margin-bottom: 3px !important;
+                }
+            </style>
+        </h:head>
+
+        <h:form id="rankingView">
+            <p:dataTable id="rankingRecycleds" var="recycledRanking" value="#{sellerView.recycledRanking}" rows="10" widgetVar="recycledTable2" sortMode="multiple" multiViewState="false"
+                         paginator="true" 
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"
+                         rowsPerPageTemplate="5,10,20,30,50,{ShowAll|'All'}"
+                         paginatorPosition ="bottom"
+                         emptyMessage="Create filters to rank data on" 
+                         stickyHeader="true"
+                         rowKey="#{recycledRanking.recycled.id}"
+                         selection="#{sellerView.selectedRankingRecycled}"
+                         selectionMode="single">
+
+                <f:facet name="header">
+                    <div class="p-d-flex p-jc-between p-ai-center">
+                        <h1 style="font-size:23px;">Context Options <i class="pi pi-info-circle" style="font-size: 1rem"></i></h1>
+                        Target Market:
+                        <p:selectOneMenu value="#{sellerView.currentRequest.context.targetMarket}" disabled="True" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctTargetMarkets}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this"/>
+                        </p:selectOneMenu>
+                        <br></br>
+                        Target Product:
+                        <p:selectOneMenu value="#{sellerView.currentRequest.context.targetProduct}" disabled="False" styleClass="custom-filter" converter="objectConverter">
+                            <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.distinctTargetProducts}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this"/>
+                        </p:selectOneMenu>
+                        <br></br>
+                        Ranking Algorithm:
+                        <p:selectOneMenu value="#{sellerView.rankingMode}" disabled="True" styleClass="custom-filter">
+                            <f:selectItem itemLabel="Recommended" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{sellerView.allRankingModes}" />
+                            <p:ajax event="itemSelect" process="@this" update="@this"/>
+                        </p:selectOneMenu>
+                        <br></br>
+                        <h1 style="font-size:23px;">Ranking for Alternative Recyclates<i class="pi pi-info-circle" style="font-size: 1rem"></i>
+                        </h1>
+                    </div>
+                    <p:commandButton class="commandButtonStyle" value="Do Ranking" action="#{sellerView.doRanking()}" process="@this,rankingView:rankingRecycleds">
+                    </p:commandButton>
+
+                </f:facet>
+
+
+                <p:column style="width:2rem" toggleable="false">
+                    <p:rowToggler/>
+                </p:column>
+
+                <p:column headerText="Ranking" toggleable="false" visible="true" filterable="false" sortable="false">
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.ranking, 2)}"/>
+                </p:column>
+
+                <p:column headerText="Polymer Type"  visible="#{sellerView.activeColumns1[0]}"  >
+
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.material.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Tested By"  visible="#{sellerView.activeColumns1[1]}"  >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.testedBy, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Supplier" filterValue="#{sellerView.currentRequest.supplier}"  visible="#{sellerView.activeColumns1[2]}"  >
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.supplier, 0)}"/>
+
+                    <!---->
+                </p:column>
+
+                <p:column headerText="Process Technology"  visible="#{sellerView.activeColumns1[3]}"  >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.processTech.name, 0)}"/>
+                </p:column>                
+
+                <p:column headerText="Polymer Modifications"  visible="#{sellerView.activeColumns1[4]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.polymerModifications.name, 0)}"/>
+
+                </p:column>
+
+                <p:column headerText="Modification Content"  visible="#{sellerView.activeColumns1[5]}"  >
+
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.modificationContent, null, sellerView.modificationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.modificationContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Particle Geometry"  visible="#{sellerView.activeColumns1[6]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.particleGeometry.name, 0)}"/>
+                </p:column>
+
+                <p:column headerText="Melt Filtration Size"  visible="#{sellerView.activeColumns1[7]}"    >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.meltFiltrationSize.value, sellerView.meltFiltrationDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.meltFiltrationSize)}"/>
+                </p:column>
+
+
+                <p:column id="mfiColumn" headerText="MFI" visible="#{sellerView.activeColumns1[8]}"   >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.MFI, null, sellerView.MFIDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.MFI)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="K Value" filterValue="#{sellerView.currentRequest.KValue}"  visible="#{sellerView.activeColumns1[9]}"  >
+
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.KValue, null, sellerView.kvalueDecimal)} "/>
+                </p:column>
+
+
+                <p:column id="charpyColumn" headerText="Charpy Impact Strength" visible="#{sellerView.activeColumns1[10]}"    >
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit, sellerView.charpyDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}"/>
+
+
+                </p:column>
+
+                <p:column headerText="E-Modulus" visible="#{sellerView.activeColumns1[11]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column headerText="E-Modulus TD"  visible="#{sellerView.activeColumns1[12]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="E-Modulus MD"  visible="#{sellerView.activeColumns1[13]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Flexural Modulus" visible="#{sellerView.activeColumns1[14]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit, sellerView.flexuralModulusDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield"  visible="#{sellerView.activeColumns1[15]}"  >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield TD"  visible="#{sellerView.activeColumns1[16]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.tensileElongationAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strength at Yield MD"  visible="#{sellerView.activeColumns1[17]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit, sellerView.strengthAtYieldDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Yield"  visible="#{sellerView.activeColumns1[18]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYield.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYield)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield TD"  visible="#{sellerView.activeColumns1[19]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYieldTD.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYieldTD)}"/>
+                </p:column>
+                <p:column headerText="Strain at Yield MD"  visible="#{sellerView.activeColumns1[29]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYieldMD.value, sellerView.strainAtYieldDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYieldMD)}"/>
+                </p:column>
+
+                <p:column headerText="Strain at Break"  visible="#{sellerView.activeColumns1[21]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreak.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreak)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break TD"  visible="#{sellerView.activeColumns1[22]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreakTD.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreakTD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Strain at Break MD"  visible="#{sellerView.activeColumns1[23]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreakMD.value, sellerView.strainAtBreakDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreakMD)}"/>
+
+                </p:column>
+
+                <p:column headerText="Color"  visible="#{sellerView.activeColumns1[24]}"  >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.color.name, 0)}"/>
+
+                </p:column>
+
+
+                <p:column headerText="Pollution"  visible="#{sellerView.activeColumns1[25]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.pollution.value, sellerView.pollutionDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.pollution)}"/>
+
+                </p:column>
+
+                <p:column headerText="Recycling Content"  visible="#{sellerView.activeColumns1[26]}"   >
+
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.recyclingContent.value, sellerView.recyclingDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.recyclingContent)}"/>
+                </p:column>
+
+
+                <p:column headerText="Density"  visible="#{sellerView.activeColumns1[27]}"  >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.density, sellerView.user.config.densityPrefferedUnit, sellerView.densityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.density, sellerView.user.config.densityPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Bulk Density"  visible="#{sellerView.activeColumns1[28]}" >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit, sellerView.adensityDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit)}"/>
+                </p:column>
+
+
+                <p:column id="izodColumn" headerText="Izod Impact Strength" visible="#{sellerView.activeColumns1[29]}"    >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit, sellerView.izodDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}"/>
+
+                </p:column>
+
+
+                <p:column id="hardnessColumn" headerText="Hardness" visible="#{sellerView.activeColumns1[30]}"   >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.hardnes, null, sellerView.hardnessDecimal)} "/>
+                </p:column>
+
+                <p:column id="vicatsColumn" headerText="Vicat" visible="#{sellerView.activeColumns1[31]}"    >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.vicat, vicatPrefferedUnit, sellerView.vicatDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}"/>
+
+                </p:column>
+
+                <p:column headerText="HDT"  visible="#{sellerView.activeColumns1[32]}"  >
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.hdt, sellerView.user.config.HDTPrefferedUnit, sellerView.HDTDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.hdt, sellerView.user.config.HDTPrefferedUnit)}"/>
+                </p:column>
+
+                <p:column headerText="Oit"   visible="#{sellerView.activeColumns1[33]}"  >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.oit.value, sellerView.OITDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.oit)}"/>
+                </p:column>
+
+                <p:column headerText="Mould Shrinkage"  visible="#{sellerView.activeColumns1[34]}"  >
+
+
+                    <h:outputText value="#{formatterService.formatVariationWithConversion(recycledRanking.recycled.mouldShrinkage, null, sellerView.mouldShrinkageDecimal)} "/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.mouldShrinkage)}"/>
+
+                </p:column>
+
+                <p:column headerText="Moisture Content"  visible="#{sellerView.activeColumns1[35]}"   >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.moistureContent.value, sellerView.moistDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.moistureContent)}"/>
+                </p:column>
+
+                <p:column headerText="Ash Content" visible="#{sellerView.activeColumns1[36]}" >
+
+                    <h:outputText value="#{formatterService.formatOutput(recycledRanking.recycled.ashContent.value, sellerView.ashDecimal)}"/>
+                    <h:outputText style="font-style: italic" value=" #{formatterService.formatUnit(recycledRanking.recycled.ashContent)}"/>
+                </p:column>
+
+
+                <p:rowExpansion>
+                    <div class="recycled">
+                        <p:growl id="msg"/>
+                        <div class="recycled-list-item">
+                            <div class="recycled-list-detail">
+                                <h4 style="margin-top:0">
+                                    <p  style="text-align:left;">
+                                        Material Details: 
+                                        <span style="float:right;">
+                                            Show Unknown Properties
+                                            <p:toggleSwitch style="float:right;" value="#{sellerView.showUnknownProperties}">
+                                                <p:ajax update="propertiesPanel" process="@this"/>
+                                            </p:toggleSwitch>
+                                        </span><!--  
+                                        <span style="float:right;" >
+                                            <p>Enable Edit</p>
+                                            <p:toggleSwitch style="float:right;" value="{sellerView.editable}" rendered="{loginService.currentUser.username eq recycledRanking.recycledRanking.recycled.createdBy or loginService.currentUser.adminTag}">
+                                                <p:ajax event="change" update="propertiesPanelSave,propertiesPanel"/>
+                                            </p:toggleSwitch>
+                                        </span>-->
+                                    </p>
+                                </h4>
+                                <p:panelGrid  columns="6" layout="grid" id="propertiesPanel">
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.supplier != null}" style="font-weight: bold;">Supplier</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.supplier != null)}" >#{formatterService.formatOutput(recycledRanking.recycled.supplier, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.testedBy != null}" style="font-weight: bold;">Tested By</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.testedBy != null}" >#{formatterService.formatOutput(recycledRanking.recycled.testedBy, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.material.name != null}" style="font-weight: bold;">Polymer Type</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.material.name != null}">#{formatterService.formatOutput(recycledRanking.recycled.material.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.processTech.name != null}" style="font-weight: bold;">Process Technology</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.processTech.name != null}" >#{formatterService.formatOutput(recycledRanking.recycled.processTech.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.particleGeometry.name != null}" style="font-weight: bold;">Particle Geometry</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.particleGeometry.name != null}" >#{formatterService.formatOutput(recycledRanking.recycled.particleGeometry.name, 0)}</p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.meltFiltrationSize.value != null}" style="font-weight: bold;">Melt Filtration Size</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.meltFiltrationSize.value != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.meltFiltrationSize, null, sellerView.MFIDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.meltFiltrationSize)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.modificationContent.valueMin != null}" style="font-weight: bold;">Modification Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.modificationContent.valueMin!= null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.modificationContent, null, sellerView.modificationDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.modificationContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.polymerModifications.name != null}" style="font-weight: bold;">Polymer Modifications</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.polymerModifications.name != null}" >#{formatterService.formatOutput(recycledRanking.recycled.polymerModifications.name, 0)}</p:column>
+
+                                    <p:column style="font-weight: bold;" rendered="#{(recycledRanking.recycled.material.name ne 'pvc')}" >MFI  (#{recycledRanking.recycled.currentMFICondition.toString()})</p:column>
+                                    <p:column style="font-weight: bold;" rendered="#{(recycledRanking.recycled.material.name eq 'pvc')}" >K Value</p:column>
+
+                                    <p:column rendered="#{(recycledRanking.recycled.material.name ne 'pvc')}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.MFI, null, sellerView.MFIDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.MFI)}</em></p:column>
+                                    <p:column rendered="#{(recycledRanking.recycled.material.name eq 'pvc')}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.KValue, null, sellerView.kvalueDecimal)}</p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.charpyTensileStr.value != null}" style="font-weight: bold;">Charpy Impact Strength (#{recycledRanking.recycled.currentCharpyImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.charpyTensileStr.value != null) and (formatterService.formatOutput(recycledRanking.recycled.charpyTensileStr.variation, sellerView.charpyDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.charpyTensileStr.value, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycledRanking.recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.charpyTensileStr.variation, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycledRanking.recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.charpyTensileStr.value != null) and (formatterService.formatOutput(recycledRanking.recycled.charpyTensileStr.variation, sellerView.charpyDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.charpyTensileStr.value, sellerView.user.config.charpyImpactStrengthPrefferedUnit, recycledRanking.recycled.charpyTensileStr.unit), sellerView.charpyDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.charpyTensileStr, sellerView.user.config.charpyImpactStrengthPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulus.valueMin != null}" style="font-weight: bold;">E-Modulus</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.EModulus, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulusTD.valueMin != null}" style="font-weight: bold;">E-Modulus TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulusTD.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.EModulusTD, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulusMD.valueMin != null}" style="font-weight: bold;">E-Modulus MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.EModulusMD.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit, sellerView.EModulusDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.EModulusMD, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.flexuralModulus.valueMin != null}" style="font-weight: bold;">Flexural Modulus</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.flexuralModulus.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.flexuralModulus, sellerView.user.config.flexuralModulusPrefferdUnit, sellerView.flexuralModulusDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.flexuralModulus, sellerView.user.config.EModulusPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYield.value != null}" style="font-weight: bold;">Stength at Yield</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYield.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileStrenghtAtYield, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYieldTD.value != null}" style="font-weight: bold;">Stength at Yield TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYieldTD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.tensileStrenghtAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileStrenghtAtYieldTD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYieldMD.value != null}" style="font-weight: bold;">Stength at Yield MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileStrenghtAtYieldMD.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit), sellerView.strengthAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileStrenghtAtYieldMD, sellerView.user.config.tensileStrenghtAtYieldPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYield.value != null}" style="font-weight: bold;">Strain at Yield</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYield.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYield.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYield)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYieldTD.value != null}" style="font-weight: bold;">Strain at Yield TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYieldTD.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYieldTD.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYieldTD)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYieldMD.value != null}" style="font-weight: bold;">Strain at Yield MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.tensileElongationAtYieldMD.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.tensileElongationAtYieldMD.value, sellerView.strainAtYieldDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.tensileElongationAtYieldMD)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreak.value != null}" style="font-weight: bold;">Strain at Break</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreak.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreak.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreak)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreakTD.value != null}" style="font-weight: bold;">Strain at Break TD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreakTD.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreakTD.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreakTD)}</em></p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreakMD.value != null}" style="font-weight: bold;">Strain at Break MD</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.elongationAtBreakMD.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.elongationAtBreakMD.value, sellerView.strainAtBreakDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.elongationAtBreakMD)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.recyclingContent.value != null}" style="font-weight: bold;">Recycling Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.recyclingContent.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.recyclingContent.value, sellerView.recyclingDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.recyclingContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.density.valueMin != null}" style="font-weight: bold;">Density</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.density.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.density, sellerView.user.config.densityPrefferedUnit, sellerView.recyclingDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.density, sellerView.user.config.densityPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.bulkDensity.valueMin != null}" style="font-weight: bold;">Bulk Density</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.bulkDensity.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit, sellerView.adensityDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.bulkDensity, sellerView.user.config.bulkDensityPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.izodTensileStr.value != null}" style="font-weight: bold;">Izod Impact Strength (#{recycledRanking.recycled.currentIzodImpactStrCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.izodTensileStr.value != null) and (formatterService.formatOutput(recycledRanking.recycled.izodTensileStr.variation, sellerView.izodDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.izodTensileStr.value, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycledRanking.recycled.izodTensileStr.unit), sellerView.izodDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.izodTensileStr.variation, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycledRanking.recycled.izodTensileStr.unit), sellerView.izodDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.izodTensileStr.value != null) and (formatterService.formatOutput(recycledRanking.recycled.izodTensileStr.variation, sellerView.izodDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.izodTensileStr.value, sellerView.user.config.izodImpactStrengthPrefferedUnit, recycledRanking.recycled.izodTensileStr.unit), sellerView.izodDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.izodTensileStr, sellerView.user.config.izodImpactStrengthPrefferedUnit)}</em></p:column>
+
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.hardnes.valueMin != null}" style="font-weight: bold;">Hardness (#{recycledRanking.recycled.currentHardness.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.hardnes.valueMin != null)}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.hardnes.valueMin, null, sellerView.hardnessDecimal)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.vicat.value != null}" style="font-weight: bold;">Vicat (#{recycledRanking.recycled.currentVicatCondition.toString()})</p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.vicat.value != null) and (formatterService.formatOutput(recycledRanking.recycled.vicat.variation, sellerView.vicatDecimal) ne '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.vicat.value, sellerView.user.config.vicatPrefferedUnit, recycledRanking.recycled.vicat.unit), sellerView.vicatDecimal)} ± #{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.vicat.variation, sellerView.user.config.vicatPrefferedUnit, recycledRanking.recycled.vicat.unit), sellerView.vicatDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}</em></p:column>
+                                    <p:column rendered="#{(sellerView.showUnknownProperties || recycledRanking.recycled.vicat.value != null) and (formatterService.formatOutput(recycledRanking.recycled.vicat.variation, sellerView.vicatDecimal) eq '-')}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.vicat.value, sellerView.user.config.vicatPrefferedUnit, recycledRanking.recycled.vicat.unit), sellerView.vicatDecimal)}  <em>#{formatterService.formatUnit(recycledRanking.recycled.vicat, sellerView.user.config.vicatPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.hdt.value != null}" style="font-weight: bold;">HDT</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.hdt.value != null}" >#{formatterService.formatOutput(unitConverterService.convertUnit(recycledRanking.recycled.hdt, sellerView.user.config.HDTPrefferedUnit), sellerView.HDTDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.hdt, sellerView.user.config.HDTPrefferedUnit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.oit.value != null}" style="font-weight: bold;">OIT</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.oit.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.oit.value, sellerView.OITDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.oit)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.moistureContent.value != null}" style="font-weight: bold;">Moisture Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.moistureContent.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.moistureContent.value, sellerView.moistDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.moistureContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.ashContent.value != null}" style="font-weight: bold;">Ash Content</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.ashContent.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.ashContent.value, sellerView.ashDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.ashContent)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.color.name != null}" style="font-weight: bold;">Color</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.color.name != null}" >#{formatterService.formatOutput(recycledRanking.recycled.color.name, 0)}</p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.pollution.value != null}" style="font-weight: bold;">Pollution</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.pollution.value != null}" >#{formatterService.formatOutput(recycledRanking.recycled.pollution.value, sellerView.pollutionDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.pollution)}</em></p:column>
+
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.mouldShrinkage.valueMin != null}" style="font-weight: bold;">Mould Shrinkage</p:column>
+                                    <p:column rendered="#{sellerView.showUnknownProperties || recycledRanking.recycled.mouldShrinkage.valueMin != null}" >#{formatterService.formatVariationWithConversion(recycledRanking.recycled.mouldShrinkage, null, sellerView.mouldShrinkageDecimal)} <em>#{formatterService.formatUnit(recycledRanking.recycled.mouldShrinkage)}</em></p:column>
+
+                                </p:panelGrid>
+                                <div class="ui-g" style="padding-left: 6px">
+                                    <div class="ui-g-3">
+                                        <p style="display: inline;font-weight: bold;">Comments</p>
+                                    </div>
+                                    <div class="ui-g-12">
+                                        <p:inputTextarea readonly="true" value="#{recycledRanking.recycled.comments}" autoResize="false" style="height: 8rem;width: 100% !important;max-height: 8rem">
+                                        </p:inputTextarea>
+                                    </div>
+                                </div>
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,rankingRecycleds" oncomplete="PF('contextDialog').show()" value="Get in contact per mail" icon="pi pi-users">
+                                </p:commandButton>
+                                <p:commandButton style="margin-right: 10pt;" type="commandButtonStyle" process="@this,rankingRecycleds" rendered="#{recycledRanking.recycled.testedBy != PSP}" action="#{sellerView.requestMaterialVerification(loginService.currentUser, recycled)}" value="Request Testing by PSP" icon="pi pi-id-card">
+                                    <p:confirm header="Confirmation" message="PSP will receive a request and will contact you with more information and an offer. Abusing this function can lead to costs and a ban!" icon="pi pi-info-circle"/>
+                                </p:commandButton>
+                            </div>
+                        </div>
+                    </div>
+                </p:rowExpansion>
+            </p:dataTable>
+
+
+        </h:form>
+    </f:view>
+</html>

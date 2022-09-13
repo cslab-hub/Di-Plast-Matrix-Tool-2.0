@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+        <h:head>
+            <style type="text/css">
+                .p-formgroup-inline {
+                    text-align: center;
+                }
+            </style>
+        </h:head>
+        <h:body>
+            <h:form>
+                <p:card class="centered" style="width: 60rem; margin: 0 auto; align-content: center;text-align:center">
+                    <h2 style="color:#003399">Di-Plast Matrix Tool</h2>
+                    <div class="p-formgroup-inline">
+                        <h2>User Login</h2>
+
+                        <div class="p-field">
+                            <label for="Username" class="p-sr-only" style="margin-right: 5pt">Username: </label>
+                            <p:inputText id="Username" type="text" value="#{loginService.username}" placeholder="Username" />
+                        </div>
+                        <div class="p-field">
+                            <label for="password" class="p-sr-only" style="margin-right: 5pt">Password: </label>
+                            <p:password id="password" value="#{loginService.pwd}" placeholder="Password"/>
+                        </div>
+                        <br></br>
+                        <p:commandButton update="@form" value="Sign in" action="#{loginService.validateUsernamePassword()}" icon="pi pi-sign-in"/>
+                        <br></br>
+                        <p:commandButton styleClass="ui-button-flat" update="@form" value="Reset Your Password" action="#{loginService.resetPWLink()}"/>
+                        <br></br>
+                        <p:messages id="messages" showDetail="true">
+                            <p:autoUpdate/>
+                        </p:messages>
+                    </div>
+                    <br/>
+                    <h3 style="color:#003399">How to join?</h3>
+                    <p>To join the project and the tool please get in contact with <a href= "mailto:todo@todo.com">Contact</a>.<br /> This step is necessary to verify that you are either a recyclate provider or consumer. </p>
+                    <p:link href="https://www.nweurope.eu/projects/project-search/di-plast-digital-circular-economy-for-the-plastics-industry/" style="align-self: center; margin: 0; padding: 0">
+                        <p:graphicImage name="figures/di-plast-logo.png" style="height: 100px; margin: auto; padding: 0" />
+                    </p:link>
+                </p:card>
+            </h:form>
+
+        </h:body>
+    </f:view>
+    <ui:include src="/footer.xhtml" />
+</html>

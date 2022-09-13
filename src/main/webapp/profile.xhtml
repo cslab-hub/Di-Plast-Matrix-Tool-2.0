@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+        <h:head>
+            <style type="text/css">
+                .centered {
+                    text-align: center;
+                }
+            </style>
+
+        </h:head>
+
+        <h:body style="background-color:#fafafa;">
+
+            <ui:include src="/tabs.xhtml" />
+            <p:card class="centered" style="width: 60rem; height: auto; margin: 0 auto; align-content: center; text-align:center;">
+                <h:form id="settingsView">
+                    <p:card id="controlCard" class="centered" style="width: 25rem; margin: 0 auto; display: inline-block; align-content: center; text-align:center;" >
+                        <b><p:outputLabel rendered="#{(loginService.currentUser.resetPW and not profileView.acceptRest)}" value="Please reset your password!"/></b>
+                        <p:card id="contentCard" class="centered" style="margin-top: 0pt">
+                            <div class="p-field p-col-12 p-md-4" >
+                                <p:outputLabel value="Current Password" for="@next" />
+                                <p:password id="confirmPW" value="#{profileView.pwConfirm}" style="width: 100% !important;">     
+                                    <p:message for="confirmPW" display="icon"/>
+                                </p:password>
+                            </div>    
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt" >
+                                <p:outputLabel value="Username" for="@next" />
+                                <p:message for="username" display="icon"/>
+                                <p:inputText id="username" style="width: 100% !important;" value="#{profileView.userName}">           
+                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                </p:inputText>
+
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt" >
+                                <p:outputLabel value="Full Name" for="@next" />
+                                <p:message for="fname" display="icon"/>
+                                <p:inputText id="fname" disabled="True" style="width: 100% !important;" value="#{profileView.fullname}">           
+                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                </p:inputText>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt" >
+                                <p:outputLabel value="Organisation" for="@next" />
+                                <p:message for="organisation" display="icon"/>
+                                <p:inputText id="organisation" disabled="True" style="width: 100% !important;" value="#{profileView.organisation}">           
+                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                </p:inputText>
+
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="New Password" for="pwfield"/>
+                                <p:password id="pwfield" value="#{profileView.password}" feedback="true" inline="true" style="width: 100% !important;">     
+                                    <p:message for="pwfield" display="icon"/>
+                                </p:password>
+                            </div>                            
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Verify Password" for="pwfield"/>
+                                <p:password id="pwfield2" value="#{profileView.passwordV}" feedback="false" inline="true" style="width: 100% !important;">     
+                                    <p:message for="pwfield2" display="icon"/>
+                                </p:password>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Email" for="@next"/>
+                                <p:inputText id="mail" style="width: 100% !important;" value="#{profileView.email}">
+                                    <p:ajax event="valueChange" process="@this" update="@this"/>
+                                    <p:message for="mail" display="icon"/>
+                                </p:inputText>
+                            </div>
+                        </p:card>
+                        <br/>
+                        <p:commandButton style="margin-right:  5pt;" update="controlCard" process="@this,controlCard" action="#{profileView.saveUser()}" class="commandButtonStyle" value="Save Account Changes"/>
+                        <br/>
+                        <p:messages id="messages"  showDetail="true" closable="true">
+                            <!--<p:autoUpdate/>-->
+                        </p:messages>
+                    </p:card>
+                </h:form>
+                <br/>
+                <h:form id="units">
+
+                    <p:card id="unitCard" class="centered" style="width: 25rem; margin: 0 auto; display: inline-block; align-content: center;text-align: center;" >
+
+                        <p:card id="contentCardUnits" class="centered" style="margin-top: 0pt">
+                            <div class="p-field p-col-12 p-md-4" >
+                                <p:outputLabel value="E-Modulus"/>
+                                <p:selectOneMenu id="unitsEModulus" value="#{profileView.EModulusChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.EModulus}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Tensile Strength at Yield"/>
+                                <p:selectOneMenu id="unitsTensileStrenghtAtYield" value="#{profileView.tensileStrenghtAtYieldChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.tensileStrenghtAtYield}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Density"/>
+                                <p:selectOneMenu id="unitsDensity" value="#{profileView.densityChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.density}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Bulk Density"/>
+                                <p:selectOneMenu id="unitsApparentDensity" value="#{profileView.apparentDensityChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.apparentDensity}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="HDT"/>
+                                <p:selectOneMenu id="unitsHDT" value="#{profileView.HDTChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.HDT}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Vicat"/>
+                                <p:selectOneMenu id="unitsVicat" value="#{profileView.vicatChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.vicat}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Charpy Impact Strength"/>
+                                <p:selectOneMenu id="unitsCharpyImpactStrength" value="#{profileView.charpyImpactStrengthChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.charpyImpactStrength}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Flexural Modulus"/>
+                                <p:selectOneMenu id="unitsFlexuralModulus" value="#{profileView.flexuralModulusChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.flexuralModulus}"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="p-field p-col-12 p-md-4" style="margin-top: 10pt">
+                                <p:outputLabel value="Izod Impact Strength"/>
+                                <p:selectOneMenu id="unitsIzodImpactStrength" value="#{profileView.izodImpactStrengthChoice}" style="display: flex">
+                                    <f:selectItems value="#{profileView.izodImpactStrength}"/>
+                                </p:selectOneMenu>
+                            </div>
+                        </p:card>
+                        <br/>
+                        <p:commandButton style="margin-right:  5pt;" update="unitCard" process="@this,unitCard" action="#{profileView.changePrefferedUnits()}" class="commandButtonStyle" value="Save Unit Changes"/>
+                        <br/>
+                        <p:messages id="messages"  showDetail="true" closable="true">
+                            <!--<p:autoUpdate/>-->
+                        </p:messages>
+                    </p:card>
+                </h:form>
+            </p:card>
+
+
+
+            <p:dialog header="User Agreement" widgetVar="agreement" minHeight="80" width="1050" modal="true" closable="False" >
+                <h:form id="agreementForm">
+                    <p:scrollPanel style="width: auto;max-height: 600px; min-height: auto" mode="native" >
+                        <p:panel id="background" header="I. Background to the test phase" styleClass="mb-2" collapsed="true" toggleableHeader="true" toggleable="true">
+                            <p class="m-0" style="font-size: 12px !important;">
+                                As part of an extensive research project with eight project partners, the two project partners Osnabrück University and Stichting Polymer Science Park (both project partners referred to as "app provider") are developing the so-called Matrix web application.<br/>
+                                In the long term, the Matrix web application aims to enable and facilitate the mutual exchange of information and the establishment of contacts between suppliers and potential buyers of recycled plastic (hereinafter "users") in order to promote the further processing of recycled plastic. <br/>
+                                Currently, the Matrix web application is in the development process. In order to test its current development status, in particular to find errors, identify and exploit potential for improvement, a test phase is carried out with interested companies. The companies’ feedback and the results of the test phase will be used to further design and improve the app until it is ready for the market. The sole purpose is to test the app, not to exchange services. No contractual relationship is established between the app provider and the user.
+                            </p>
+                        </p:panel>
+                        <p:panel id="matrixDesc" header="II. Brief description of the matrix web application" styleClass="mb-2" collapsed="true" toggleableHeader="true" toggleable="true">
+                            <p class="m-0" style="font-size: 12px !important;">
+                                To use the web application the registration and creation of a user account is required. Users who have recycled plastic (hereinafter: "adjusters") can feed the Matrix web application with information concerning recycled plastic. The Matrix web application will not be fed with quantities, prices or purchase options. Please note that Matrix only offers information and the possibility of exchanging contacts. However, it is not a trading platform and does not offer the possibility to negotiate and/or to conclude contracts. <br/>
+                                The information, which users enter, is accessible to all other registered users. Users searching for recycled plastic (hereinafter: interested party) can carry out search queries and filter them according to specific plastic properties. If a search query is successful, the respective search result is suggested to the interested party. This suggestion contains the information entered by the adjuster as well as his contact details. Further contacting is left to the user's discretion. <br/>
+                                Furthermore, a "ranking function" can provide the user with suggestions for certain plastic products that have similar properties to the searched material.
+                            </p>
+                        </p:panel>
+                        <p:panel id="disclaimer" header="III. Disclaimer" styleClass="mb-2" collapsed="false" toggleableHeader="true" toggleable="true" >
+                            <p class="m-0" style="font-size: 12px !important;">
+                                Users are aware that the Matrix web application is in the trial version, still being researched and not ready for the market. The Matrix web application is only used in the context of a test run, in which users participate voluntarily. The use of the Matrix web application is at the user's own risk. Contractual relationships are not established. There is no warranty for the Matrix web application. The app provider shall only be liable in the event of willful misconduct. Any other liability is excluded. <br/>
+                                Users enter and use the information on their own responsibility. The app provider does not check the information, neither with regard to the legality, correctness, completeness, up-to-dateness nor with regard to other relevant and/or non-relevant factors.
+                                <p:panel id="details" header="In detail, users are aware of the following:" styleClass="m-0" style="font-size: 12px !important;" collapsed="true" toggleableHeader="true" toggleable="true" >
+                                    <p class="m-0" style="font-size: 12px !important;">
+                                        There is no claim to the availability, functionality or a certain quality of the Matrix web application. The app provider may restrict or discontinue the app and/or certain functionalities at any time. In addition to it, maintenance work, security and capacity reasons, technical circumstances and other events may lead to the Matrix web application being temporarily or permanently unavailable. 
+                                        Users are aware of the possibility that search queries may not be executed or may be executed incompletely or otherwise incorrectly. <br/>
+                                        They are aware of the Matrix web application’s role as a mere information and contact portal. The Matrix web application does not provide advice, not even via the ranking function. <br/>
+                                        Since the amount of data entered by users has a significant influence on the execution of search queries and the ranking, and since users may provide incorrect information, incorrect or incomplete suggestions cannot be excluded. The ranking function is used in the knowledge that it can at best provide approximate suggestions based on basic theoretical assumptions.<br/>
+                                        Any contacts, business initiations, conclusion of contracts, resulting from a possible contact mediated through the app, are the users' exclusive matter and concern them solely. <br/>
+                                        It is the users' responsibility to ensure that they are fully authorized to use and disclose the information they enter. If third parties assert claims against the app provider due to the information and other content posted by the user, the user shall indemnify the app provider. The claim for indemnification does not exist if the user is not responsible for the infringement.
+                                    </p>
+                                </p:panel>
+                            </p>
+                        </p:panel>
+                    </p:scrollPanel>
+                    <p class="m-0" style="font-size: 12px !important;bol">
+                        <b>
+                            Please confirm the following conditions before starting using the Matrix application:
+                        </b>
+                    </p>
+                    <p>
+                        <p:selectBooleanCheckbox required="true" style="margin-top: -6.7px" requiredMessage="Accepting the conditions are mendetory for using the application"  valueChangeListener="#{profileView.logDisclaimerAgree()}" value="#{profileView.disclaimer}" > 
+                            <p:ajax process="@this,confirmAgre" update="confirmAgre" />
+                        </p:selectBooleanCheckbox> I confirm that I consense to the texts above which can also be found at  <p:link style="margin:  0; padding: 0;" outcome="disclaimer" value="Disclaimer"/>
+                    </p>
+                    <p>
+                        <p:selectBooleanCheckbox style="margin-top: -6.7px" required="true" requiredMessage="Accepting the conditions are mendetory for using the application" valueChangeListener="#{profileView.logDataPolicAgree()}" value="#{profileView.dataPrivacy}" > 
+                            <p:ajax process="@this,confirmAgre" update="confirmAgre" />
+                        </p:selectBooleanCheckbox>
+                        I accept that my data can be processed as mentioned in the data policy. I am aware that I can withdraw my consent at any time. More details can be found in the <p:link  style="padding: 0; margin-top: 0px" outcome="dataPrivacy" value="Data Policy"/>
+
+                    </p>
+                    <br/>
+                    <p:commandButton style="padding: 0px; height:50px !important" id="confirmAgre" value="Accept" disabled="#{not (profileView.dataPrivacy and profileView.disclaimer)}" action="#{profileView.acceptAgreement()}"/>
+                </h:form>
+            </p:dialog>
+
+        </h:body>
+    </f:view>
+    <ui:include src="/footer.xhtml" />
+</html>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<facelet-taglib>
+    <namespace>http://uos.com/custom</namespace>
+    <tag>
+        <tag-name>sliderV</tag-name>
+        <component>
+            <description>Custom Slider filter</description>
+            <component-type>view.components.SliderV</component-type>
+            <renderer-type>org.primefaces.component.SliderRenderer</renderer-type>
+        </component>
+    </tag>
+    <tag>
+        <tag-name>filterPanel</tag-name>
+        <component>
+            <description>Custom Output Panel for filters</description>
+            <component-type>view.components.FilterPanel</component-type>
+            <renderer-type>org.primefaces.component.OutputPanelRenderer</renderer-type>
+        </component>
+    </tag>
+</facelet-taglib>

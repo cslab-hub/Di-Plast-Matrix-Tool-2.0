@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html;charset=UTF-8" encoding="UTF-8">
+        <h:head>
+            <style type="text/css">
+                .p-formgroup-inline {
+                    text-align: center;
+                }
+            </style>
+        </h:head>
+        <h:body>
+            <h:form>
+                <div class="p-formgroup-inline">
+                    <h2>Reset Password</h2>
+
+                    <div class="p-field">
+                        <label for="code" class="p-sr-only" style="margin-right: 5pt">Email: </label>
+                        <p:inputText id="code" type="text" value="#{loginService.resetMail}" placeholder="E-Mail" />
+                    </div>
+                    <br></br>
+                    <p:commandButton update="@form" value="Rest Password" action="#{loginService.resetPW()}" icon="pi pi-sign-in"/>
+                    <br></br>
+                    <p:commandButton styleClass="ui-button-flat" value="Back to Login" action="#{loginService.returnFromResetLink()}" icon="pi pi-arrow-left"/>
+                    <br></br>
+                    <p:messages id="messages" showDetail="true">
+                        <p:autoUpdate/>
+                    </p:messages>
+                </div>
+            </h:form>
+        </h:body>
+    </f:view>
+    <ui:include src="/footer.xhtml" />
+</html>
